@@ -3,15 +3,15 @@
 
 #define RCC_APB2ENR *(volatile unsigned int *)0x40021018
 
-//¸±·¹ÀÌ¸ğµâ
-#define GPIOC_CRL *(volatile unsigned int *)0x40011000 //Joystick Configuration Regiester Low
-#define GPIOC_CRH *(volatile unsigned int *)0x40011004 //Joystick Configuration Regiester Low
+//ë¦´ë ˆì´ëª¨ë“ˆ
+#define GPIOC_CRL *(volatile unsigned int *)0x40011000 //Joystick Configuration Register Low
+#define GPIOC_CRH *(volatile unsigned int *)0x40011004 //Joystick Configuration Register High
 #define GPIOC_IDR *(volatile unsigned int *)0x40011008 //Joystick Input Data Register
 #define GPIOC_BSRR *(volatile unsigned int *)0x40011010 //BIT SET, RESET WRITE
 
-//LED, ¹öÆ°
-#define GPIOD_CRL *(volatile unsigned int *)0x40011400 //LED Configuration Regiester Low
-#define GPIOD_CRH *(volatile unsigned int *)0x40011404 //LED Configuration Regiester High
+//LED, ë²„íŠ¼
+#define GPIOD_CRL *(volatile unsigned int *)0x40011400 //LED Configuration Register Low
+#define GPIOD_CRH *(volatile unsigned int *)0x40011404 //LED Configuration Register High
 #define GPIOD_BSRR *(volatile unsigned int *)0x40011410 //LED Bit Set/Reset Register
 #define GPIOD_IDR *(volatile unsigned int *)0X40011408 //LED LOW, HIGH READ
 
@@ -22,16 +22,16 @@ void init() {
   GPIOD_CRL = 0x44444444; // reset
   GPIOD_CRL = 0x30000000; // led PD 7 output push-pull
  
-  //¹öÆ°: PD11(S1), PD12(S2)
+  //ë²„íŠ¼: PD11(S1), PD12(S2)
   GPIOD_CRH = 0x44444444; // reset
-  GPIOD_CRH = 0x00088000; // ¹öÆ° configuration input 
-  GPIOD_IDR = 0x00000000; // ¹öÆ° INPUT DATA REGISTER RESET
-  GPIOD_BSRR = 0x00000000; // ¹öÆ° bsrr ¸®¼Â
+  GPIOD_CRH = 0x00088000; // ë²„íŠ¼ configuration input 
+  GPIOD_IDR = 0x00000000; // ë²„íŠ¼ INPUT DATA REGISTER RESET
+  GPIOD_BSRR = 0x00000000; // ë²„íŠ¼ bsrr ë¦¬ì…‹
  
-  //¸±·¹ÀÌ ¸ğµâ: PC8
+  //ë¦´ë ˆì´ ëª¨ë“ˆ: PC8
   GPIOC_CRH = 0x44444444; // reset
-  GPIOC_CRH = 0x00000003; // ¸±·¹ÀÌ PC8 ÄÁÇÇ±Ô¾î·¹ÀÌ¼Ç, output  push-pull
-  GPIOC_BSRR = 0x00000000; // ¸±·¹ÀÌ bsrr ¸®¼Â
+  GPIOC_CRH = 0x00000003; // ë¦´ë ˆì´ PC8 ì»¨í”¼ê·œì–´ë ˆì´ì…˜, output  push-pull
+  GPIOC_BSRR = 0x00000000; // ë¦´ë ˆì´ bsrr ë¦¬ì…‹
 }
 
 void led7on() { 
@@ -50,11 +50,11 @@ int main(void)
   init();
  
   while(1){
-    if (~GPIOD_IDR & 0x00000800) { // pd 11¹ø ¹öÆ° ´­·ÈÀ»¶§ ¸ğÅÍ ÀÛµ¿
+    if (~GPIOD_IDR & 0x00000800) { // pd 11ë²ˆ ë²„íŠ¼ ëˆŒë ¸ì„ë•Œ ëª¨í„° ì‘ë™
       GPIOC_BSRR = 0x0100; // pc8 set
       delay();
       GPIOC_BSRR = 0x01000000; // pc8 reset
-    } else if (~GPIOD_IDR & 0x00001000) { //pd 12¹ø ¹öÆ° ´­·ÈÀ» ¶§  led ÄÔ
+    } else if (~GPIOD_IDR & 0x00001000) { //pd 12ë²ˆ ë²„íŠ¼ ëˆŒë ¸ì„ ë•Œ  led ì¼¬
       led7on();
       delay();
       led7off();
