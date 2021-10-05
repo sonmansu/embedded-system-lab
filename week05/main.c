@@ -1,83 +1,60 @@
-//embedded system lab group7 5th week mission
+//embedded system lab group 7 5th week mission
 #include "stm32f10x.h"
 
 #define RCC_APB2ENR *(volatile unsigned int *)0x40021018
 
-//∏±∑π¿Ã∏µ‚
-#define GPIOC_CRL *(volatile unsigned int *)0x40011000 //Joystick Configuration Regiester Low
-#define GPIOC_CRH *(volatile unsigned int *)0x40011004 //Joystick Configuration Regiester Low
+//Î¶¥Î†àÏù¥Î™®Îìà
+#define GPIOC_CRL *(volatile unsigned int *)0x40011000 //Joystick Configuration Register Low
+#define GPIOC_CRH *(volatile unsigned int *)0x40011004 //Joystick Configuration Register High
 #define GPIOC_IDR *(volatile unsigned int *)0x40011008 //Joystick Input Data Register
-#define GPIOC_BSRR *(volatile unsigned int *)0X40011010 //BIT SET, RESET WRITE
+#define GPIOC_BSRR *(volatile unsigned int *)0x40011010
 
-//LED, πˆ∆∞
-#define GPIOD_CRL *(volatile unsigned int *)0x40011400 //LED Configuration Regiester Low
-#define GPIOD_CRH *(volatile unsigned int *)0x40011404 //LED Configuration Regiester High
+//LED, Î≤ÑÌäº
+#define GPIOD_CRL *(volatile unsigned int *)0x40011400 //LED Configuration Register Low
+#define GPIOD_CRH *(volatile unsigned int *)0x40011404 //LED Configuration Register High
 #define GPIOD_BSRR *(volatile unsigned int *)0x40011410 //LED Bit Set/Reset Register
-#define GPIOD_IDR *(volatile unsigned int *)0X40011408 //LED LOW, HIGH READ
-
-//
-//// ∏±∑π¿Ã∏µ‚
-//#define GPIOB_CRL *(volatile unsigned int *)0x40010c00 //selection button base
-//#define GPIOB_CRH *(volatile unsigned int *)0X40010c04 //LED 8~15
-//#define GPIOB_BSRR *(volatile unsigned int *)0X40010c10 //BIT SET, RESET WRITE
-//#define GPIOB_BRR *(volatile unsigned int *)0X40010c14 //BIT RESET (CONFIRM)
-//#define GPIOB_IDR *(volatile unsigned int *)0X40010c08 //LED LOW, HIGH READ
+#define GPIOD_IDR *(volatile unsigned int *)0X40011408
 
 void init() {
   RCC_APB2ENR = 0x30; // Port C,D Clock Enable
- 
+
   // LED PD7
   GPIOD_CRL = 0x44444444; // reset
   GPIOD_CRL = 0x30000000; // led PD 7 output push-pull
- 
-  ///////////////////////////////////////
-  //πˆ∆∞ INIT, πˆ∆∞: PD11(S1), PD12(S2)
+  GPIOD_BSRR = 0x00000000; // led bsrr Î¶¨ÏÖã
+
+  //Î≤ÑÌäº: PD11(S1), PD12(S2)
   GPIOD_CRH = 0x44444444; // reset
-  GPIOD_CRH = 0x00088000; // πˆ∆∞ configuration
-  GPIOD_IDR = 0x00000000; // πˆ∆∞ INPUT DATA REGISTER RESET
-  GPIOD_BSRR = 0x00000000; // ∏±∑π¿Ã bsrr ∏Æº¬
+  GPIOD_CRH = 0x00088000; // Î≤ÑÌäº configuration input 
+  GPIOD_IDR = 0x00000000; // Î≤ÑÌäº INPUT DATA REGISTER RESET
  
-  //∏±∑π¿Ã ∏µ‚: PC8 , ¡∑∫∏º± pc8 & 9 ªÁøÎ 
+  //Î¶¥Î†àÏù¥ Î™®Îìà: PC8
   GPIOC_CRH = 0x44444444; // reset
-  GPIOC_CRH = 0x00000100; // ∏±∑π¿Ã PC8 ƒ¡««±‘æÓ∑π¿Ãº«
-  //  GPIOC_BSRR = 0x00000000; // ∏±∑π¿Ã bsrr ∏Æº¬
+  GPIOC_CRH = 0x00000003; // Î¶¥Î†àÏù¥ PC8 Ïª®ÌîºÍ∑úÏñ¥Î†àÏù¥ÏÖò, output  push-pull
+  GPIOC_BSRR = 0x00000000; // Î¶¥Î†àÏù¥ bsrr Î¶¨ÏÖã
 }
 
-void led7on() { //only pd 7 led on
-  GPIOD_BSRR = 0x00000080;
-}
-void led7off() {    //turn off all LEDs
-  GPIOD_BSRR = 0x00800000; // led 7 reset
-}
 void delay(void) {
   int i=0;
   for(i=0;i<1000000;i++)   {}  //empty Loop
 }
 
-int main(void)
-{
+int main(void) {
   init();
- 
+
   while(1){
-    if (~GPIOD_IDR & 0x00000800) { // pd 11π¯ πˆ∆∞ ¥≠∑»¿ª∂ß
-      GPIOC_BSRR = 0x0100; // pc8 set
+    if (~GPIOD_IDR & 0x00000800) {            // pd 11Î≤à Î≤ÑÌäº ÎàåÎ†ÄÏùÑÎïå Î™®ÌÑ∞ ÏûëÎèô
+
+      GPIOC_BSRR = 0x00000100;                // relay on : pc8 set
       delay();
+      GPIOC_BSRR = 0x01000000;                // relay off : pc8 reset
+
+    } else if (~GPIOD_IDR & 0x00001000) {   // pd 12Î≤à Î≤ÑÌäº ÎàåÎ†ÄÏùÑ Îïå  led Ïº¨
+
+      GPIOD_BSRR = 0x00000080;                // led7 on  :  pd7 bsrr set
       delay();
-      delay();
-      delay();
-      GPIOC_BSRR = 0x01000000; // pc8 reset
-      delay();
-      delay();
-     
-    } else if (~GPIOD_IDR & 0x00001000) { //pd 12π¯ πˆ∆∞ ¥≠∑»¿ª ∂ß
-      //     GPIOC_BSRR = 0x0100; // pc8 set
-     
-      led7on();
-      delay();
-      delay();
-      delay();
-      led7off();
-      delay();
+      GPIOD_BSRR = 0x00800000;                // led7 off :  pd7 bsrr reset
+
     }
   }
-} 
+}
