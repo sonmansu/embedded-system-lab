@@ -19,7 +19,7 @@
  ### 릴레이 모듈
 
 &nbsp;&nbsp;릴레이 모듈은 릴레이를 제어하는 모듈로, 전자기 유도원리를 이용하여 스위치 역할로써 사용가능하다. 릴레이의 제어 신호에 신호를 가하여 출력상태(ON/OFF)를 변경할 수 있다.   
-&nbsp;&nbsp;릴레이 모듈의 VCC와 GND에 전원을 연결하고 제어 신호(IN)에는 PC8과 연결했다. COM은 제어 신호(IN)에 따라 NO 또는 NC로 붙는데, NO(Normally Closed)는 평소에 close 돼있고 high 신호를 보내면 닫혀있던 스위치가 열려 흐르던 전류가 멈춘다. NC(Normally Open)는 평소에 open 돼있고 high 신호를 보내면 열려있던 스위치가 닫혀 전류가 흐른다.
+&nbsp;&nbsp;릴레이 모듈의 VCC와 GND에 전원을 연결하고 제어 신호(IN)에는 PC8과 연결했다. COM은 제어 신호(IN)에 따라 NO 또는 NC로 붙는데, NC(Normally Clsoed)는 평소에 close 돼있고 high 신호를 보내면 닫혀있던 스위치가 열려 흐르던 전류가 멈춘다. NO(Normally Open)는 평소에 open 돼있고 high 신호를 보내면 열려있던 스위치가 닫혀 전류가 흐른다.
 
 | <img src="https://user-images.githubusercontent.com/80534651/136149041-58d5fc9c-b407-498d-a252-b28ed5d87477.png" width="100%"> | 
 |:--:| 
