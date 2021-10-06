@@ -55,6 +55,16 @@
       GPIOC_BSRR = 0x00000000; // 릴레이 bsrr 리셋
 }
   ```
+&nbsp;&nbsp;이번 실험에서 사용할 delay는 delay함수를 만들어 사용한다.delay 함수 내부는 ppt의 내용을 참고하여 for문을 이용한 공루프 형태로 구현한다.
+
+
+  ``` C
+  void delay(void) {
+    int i=0;
+    for(i=0;i<1000000;i++)  {} //empty Loop
+  }
+  ```
+
 &nbsp;&nbsp;while()문에서는 if-else 조건문으로 버튼 입력에 따라 모터를 작동시키거나 LED를 점멸한다. 버튼 입력 시 GPIOD_IDR 레지스터의 해당 핀 번호로 0이 저장되기 때문에 not(~) 연산 후 1과 AND(&) 연산 하여 버튼 입력을 확인했다. S1 버튼을 누를 경우 GPIOC_BSRR의 8번 bit를 set하여 릴레이에 high 신호를 주어 모터를 작동시킨다. delay() 함수 동안 모터를 작동 시킨 후 GPIOC_BSRR의 24번 bit에 1을 주어 reset 시켜 모터를 멈춘다. S2 버튼을 누를 경우 LED는 GPIOD_BSRR의 7번 bit에 1을 주어 점등하고 delay() 후 23번 bit에 1을 주어 소등한다.
 
 
