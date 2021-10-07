@@ -23,7 +23,7 @@ void init() {
 void up_led2on() { //only pd 2 led on
   GPIOD_BSRR = 0x00000004; // pin 2 set 
 }
-void down_led3on { //only pd 3 led on
+void down_led3on() { //only pd 3 led on
   GPIOD_BSRR = 0x00000008; 
 }
 void left_led4on() { //only pd 4 led on 
@@ -41,16 +41,16 @@ int main(void)
   
   while(1){
     if(~GPIOC_IDR & 0x4){    //0100
-      down_led3on;           //down ÇÏ¸é PD3 LED °¡ ÄÑÁü
+      down_led3on();           //down í•˜ë©´ PD3 LED ê°€ ì¼œì§
     }
     else if(~GPIOC_IDR& 0x20){  //0010 0000 
-      up_led2on();              //up ÇÏ¸é PD2 LED °¡ ÄÑÁü
+      up_led2on();              //up í•˜ë©´ PD2 LED ê°€ ì¼œì§
     }
     else if(~GPIOC_IDR & 0x8) {  //0000 1000
-      left_led4on();             //left ÇÏ¸é PD4 LED °¡ ÄÑÁü
+      left_led4on();             //left í•˜ë©´ PD4 LED ê°€ ì¼œì§
     }
     else if(~GPIOC_IDR & 0x10){  //0001 0000
-      right_led7on();            //right ÇÏ¸é PD7 LED °¡ ÄÑÁü
+      right_led7on();            //right í•˜ë©´ PD7 LED ê°€ ì¼œì§
     }
     else off();
   }
