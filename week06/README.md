@@ -207,18 +207,17 @@ PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결
   /* Determine the integer part */
   /* Determine the fractional part */
   //@TODO - 11: Calculate & configure BRR
-  USART1->BRR &= ~(uint32_t)(USART_BRR_DIV_Fraction);
+  USART1->BRR &= ~(uint32_t)(USART_BRR_DIV_Fraction|USART_BRR_DIV_Mantissa);
   USART1->BRR |= 0x70E;
   ```
-&nbsp;&nbsp;
-
-### TODO-12 : Enable UART (UE)
+&nbsp;&nbsp;USART1->BRR &= ~(uint32_t)(USART_BRR_DIV_Fraction|USART_BRR_DIV_Mantissa);을 이용하여 BRR을 configure해준후 (레퍼런스 27.6.3참고) 미션지에서 제공된 PCLK2 (26MHz)와 Baud Rate(14400)을 이용하여 USARTDIV를 구한다.여기서 USARTDIV는 26,000,000 / (16 * 14400) 으로 112.847 값이 나왔고 이 값을 USART1_BRR로부터 derive하기 위하여 DIV_Fraction과 DIV_Mantissa로 나누어 계산한다.DIV_Fraction은 소수점아래 값 0.847 * 16 = 13.552 와 가까운 정수값 14 즉, E 이고 DIV_Mantissa는 정수값 112의 16진수값 70이다.따라서, USART_BRR에 넣어야하는 값은 0x70E가 된다.
+### TODO-12 : Enable USART (UE)
 
   ``` C
-  //@TODO - 12: Enable UART (UE)
+  //@TODO - 12: Enable USART (UE)
   USART1->CR1 |= (uint32_t)USART_CR1_UE;
   ```
-&nbsp;&nbsp;
+&nbsp;&nbsp;27.6.4 레퍼런스 참고하여 라이브러리에서 정의된 UART를 Enable해주는 USART_CR1_UE를 사용한다.
 
 ### TODO-13 : 버튼 입력 시 message 설정
 
