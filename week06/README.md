@@ -185,7 +185,7 @@ PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결
   ```
   
 &nbsp;&nbsp;USART1->CR2 &= (uint32_t) ~(USART_CR2_STOP);
-&nbsp;&nbsp;위 코드로 이미 stop bit를 초기화 한 상태이다. 레퍼런스 27.6.5를 보면, usart_cr2가 나오는데, stop bit가 1이기 위해서는 비트의 값이 0이어야 한다. 초기화 해놓은 상태와 같은 상태이기 때문에 추가적인 코드작성이 필요하지 않다.
+ 코드로 이미 stop bit를 초기화 한 상태이다. 레퍼런스 27.6.5를 보면, usart_cr2가 나오는데, stop bit가 1이기 위해서는 비트의 값이 0이어야 한다. 초기화 해놓은 상태와 같은 상태이기 때문에 추가적인 코드작성이 필요하지 않다.
 
 ### TODO-10 : CTS, RTS disable
 
