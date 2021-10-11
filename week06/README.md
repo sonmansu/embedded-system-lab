@@ -67,54 +67,60 @@ PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결
 ## 4. 코드 설명
 
 ### TODO-1 : SYSCLK를 52MHZ로 설정
+<img src="https://s3.us-west-2.amazonaws.com/secure.notion-static.com/13396cc3-caf5-484c-a5d0-9853375a3dc4/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAT73L2G45O3KS52Y5%2F20211011%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211011T132016Z&X-Amz-Expires=86400&X-Amz-Signature=0fc51d109a04630cff2b3b2b304c0f3988d944840865af74344a76fbb7d0dfda&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22" width="300">
+&nbsp;&nbsp;HSE OSC에서 생성한 25MHz 클럭을 52MHz로 바꾸기 위해선 아래와 같은 과정을 거치면 된다.   
 
-  ``` C
-  //@TODO - 1 Set the clock
-  /* HCLK = SYSCLK */
-  RCC->CFGR |= (uint32_t)RCC_CFGR_HPRE_DIV1;
-  /* PCLK2 = HCLK / ?, use PPRE2 */
-  RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV1;
-  /* PCLK1 = HCLK */
-  RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE1_DIV1;
+```
+1. PREDIV2에서 /5 (RCC_CFGR2 레지스터)
+2. PLL2MUL에서 *13 (RCC_CFGR2 레지스터)
+3. PREDIV1SRC 에서 PPL2 클락 선택 (RCC_CFGR2레지스터)
+4. PREDIV1에서 /5 (RCC_CFGR2 레지스터) 
+5. PLLSRC에서 PREDIV1으로 부터 나온 클락 선택 (RCC_CFGR)
+6. PLLMUL에서 *4 (RCC_CFGR 레지스터)
+7. SW에서 PLL 선택 (RCC_CFGR)
+```
 
-  /* Configure PLLs ------------------------------------------------------*/
-  RCC->CFGR &= (uint32_t)~(RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL);
-  RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLMULL4);
+레퍼런스에 따르면 PREDIV2, PLL2MUL, PREDIV1SRC, PREDIV1은 RCC_CFGR2 레지스터를 통하여 설정하고 PLLSRC, PLLMUL은 RCC_CFGR 레지스터를 통해 설정한다. 요구 조건에 따라 수정한 코드는 다음과 같다.
+``` C
+/* Configure PLLs ------------------------------------------------------*/
+RCC->CFGR &= (uint32_t)~(RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL); // 사용을 위한 초기화
+RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLMULL4); // *4 
 
-  RCC->CFGR2 &= (uint32_t)~(RCC_CFGR2_PREDIV2 | RCC_CFGR2_PLL2MUL | RCC_CFGR2_PREDIV1 | RCC_CFGR2_PREDIV1SRC);
-  RCC->CFGR2 |= (uint32_t)(RCC_CFGR2_PREDIV2_DIV5 | RCC_CFGR2_PLL2MUL13 | RCC_CFGR2_PREDIV1SRC_PLL2 | RCC_CFGR2_PREDIV1_DIV5);
-  //@End of TODO - 1
-  ```
-&nbsp;&nbsp;
+RCC->CFGR2 &= (uint32_t)~(RCC_CFGR2_PREDIV2 | RCC_CFGR2_PLL2MUL | RCC_CFGR2_PREDIV1 | RCC_CFGR2_PREDIV1SRC); // 사용을 위한 초기화
+RCC->CFGR2 |= (uint32_t)(RCC_CFGR2_PREDIV2_DIV5 | RCC_CFGR2_PLL2MUL13 | RCC_CFGR2_PREDIV1SRC_PLL2 | RCC_CFGR2_PREDIV1_DIV5); // /5, *13, /5 
+//@End of TODO - 1
+```
 
 ### TODO-2 : MCO 포트를 시스템 클럭 출력으로 설정
+``` C
+//@TODO - 2 Set the MCO port for system clock output
+RCC->CFGR &= ~(uint32_t)RCC_CFGR_MCO;
+RCC->CFGR |= (uint32_t)RCC_CFGR_MCO_SYSCLK;
+//@End of TODO - 2
+```
+&nbsp;&nbsp;RCC_CFGR 레지스터의 MCO 에 0100 값을 주어 시스템 클락(SYSCLK)을 선택한다. 선택된 시스템 클럭은 오실로스코프로 확인이 가능하다. 
 
-  ``` C
-  //@TODO - 2 Set the MCO port for system clock output
-  RCC->CFGR &= ~(uint32_t)RCC_CFGR_MCO;
-  RCC->CFGR |= (uint32_t)RCC_CFGR_MCO_SYSCLK;
-  //@End of TODO - 2
-  ```
   
-&nbsp;&nbsp;RCC->CFGR |= (UINT32_T)RCC_CFGR_MCO_SYSCLK;를 이용하여 설정한다.
-
 ### TODO-3 : RCC 설정
 
-  ``` C
-  void RCC_Enable(void) {
-    //@TODO - 3 RCC Setting
-    /*---------------------------- RCC Configuration -----------------------------*/
-    /* GPIO RCC Enable  */
-    /* UART Tx, Rx, MCO port */
-    RCC->APB2ENR |= (uint32_t)((RCC_APB2ENR_IOPAEN) | (RCC_APB2ENR_AFIOEN));
-    /* USART RCC Enable */
-    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    /* User S1 Button RCC Enable */
-    RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
-  }
-  ```
-  
-&nbsp;&nbsp;
+```C
+/* GPIO RCC Enable  */
+/* UART Tx, Rx, MCO port */
+RCC->APB2ENR |= (uint32_t)((RCC_APB2ENR_IOPAEN) | (RCC_APB2ENR_AFIOEN));
+```
+&nbsp;&nbsp;MCO는 PA8, USART1_TX는 PA9, USART1_RX는 PA10를 사용하고 MCO와 UART Tx는 Alternative function으로 사용할 것이기 때문에 IOPAEN과 AFIOEN을 set해준다.
+
+```C
+/* USART RCC Enable */
+RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+```
+그리고 USART1을 이용하여 통신하기 때문에 USART1EN을 set 한다.   
+
+```C
+/* User S1 Button RCC Enable */
+RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
+```
+마지막으로 S1 Button은 PD11을 사용하기 때문에 IOPDEN을 set해준다.
 
 ### TODO-4 : USART SETTING
 
