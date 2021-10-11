@@ -195,7 +195,7 @@ void SendData(uint16_t data) {
 
 int main() {
   int i;
-  char msg[] = " Hello Team07\r\n";
+  char msg[] = "Hello Team07\r\n";
 
   SysInit();
   SetSysClock();
@@ -218,4 +218,4 @@ int main() {
   }
 
 }// end main
-// ¸¶Áö¸· ÄÚµå
+// Â¸Â¶ÃÃ¶Â¸Â· Ã„ÃšÂµÃ¥
