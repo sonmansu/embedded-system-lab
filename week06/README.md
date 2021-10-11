@@ -153,7 +153,7 @@ PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결
   //@TODO - 6: WordLength : 8bit
   ```
   
-&nbsp;&nbsp;USART_CR1 레퍼런스를 참고하면, WORDLENGTH에 관한 비트 M의 비트값 설정을 보면 비트값이 0일 때, WORD_LENGTH가 8BIT임을 알 수 있다.USARTINIT()함수의 초기화부분(맨 첫줄)에서 USART_CR1_M을 이용하여 비트를 0으로 초기화 하였으므로, 추가 코드 입력이 굳이 필요하지 않겠다.
+&nbsp;&nbsp;USART_CR1 레퍼런스를 참고하면, WORDLENGTH에 관한 비트 M의 비트값 설정을 보면 비트값이 0일 때, WORD_LENGTH가 8BIT임을 알 수 있다. USARTINIT()함수의 초기화부분(맨 첫줄)에서 USART_CR1_M을 이용하여 비트를 0으로 초기화 하였으므로, 따로 코드를 추가하지는 않았다.
 
 ### TODO-7 : parity:none(disable)
 
@@ -162,7 +162,7 @@ PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결
   //@TODO - 7: Parity : None
   ```
   
-&nbsp;&nbsp;USART_CR1의 레퍼런스를 확인해 보면 비트값이 0일 때, PARITY기능을 disable 한다고 나와 있다. uartinit()함수 초기화 부분에서 usart_cr1_pce를 이용한 초기화를 진행하였으므로, 불필요한 추가 코드는 필요없다.
+&nbsp;&nbsp;USART_CR1의 레퍼런스를 확인해 보면 비트값이 0일 때, PARITY기능을 disable한다고 나와 있다. uartinit()함수 초기화 부분에서 usart_cr1_pce를 이용한 초기화를 진행하였으므로, 따로 코드를 추가하지는 않았다.
 
 ### TODO-8 : enable tx and rx
 
