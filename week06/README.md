@@ -256,5 +256,10 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
 &nbsp;&nbsp;if문에서 버튼 입력 시 GPIOD_IDR 레지스터의 해당 핀 번호로 0이 저장되기 때문에 not(~) 연산 후 1과 AND(&) 연산 하여 버튼 입력을 확인했고 입력이 확인이 되면 SendData함수를 이용하여 우리가 보낼 msg를 for문을 이용하여 전송한다.
 
 ## 5. 실험 결론
+| <img src="https://user-images.githubusercontent.com/64721658/136804175-bec06e96-45c3-4b55-b7b9-86b02c194979.png" width ="500px"> | <img src="https://user-images.githubusercontent.com/64721658/136802328-ea76780e-f9c4-4ea7-a37b-985b056e7c8e.jpg" width="600px"> |
+|:--:|:--:| 
+| Putty | 오실로스코프 |
+
+&nbsp;&nbsp;위 사진과 같이 작성한 main.c파일에서 전송한 Hello Team07 메시지를 putty에서 나오는 것을 확인하였다.또한 오실로스코프를 이용하여 MCO를 통해 나오는 System Clock 수치를 확인하였다.
 
 &nbsp;&nbsp;실험과정에서 baud rate계산 시 실수를 하여 값을 잘못 입력하였지만, 다시 계산하여 결과값을 도출해 냈다. 이번 실험으로 단거리 비동기 통신인 uart방식으로 컴퓨터와 보드간의 통신과정 및 결과를 확인할 수 있었고, 근거리에서의 uart통신의 신속성과 정확성을 알 수 있었다. 처음으로 헤더파일 참조를 사용하여서 불편하기도 했지만, 조금 더 써보면 코드의 작업속도를 증진시킬 수 있는 방법이 될 거 같다는 것을 알 수도 있을 것 같았다.
