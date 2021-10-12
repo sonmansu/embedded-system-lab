@@ -177,7 +177,9 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   USART1->CR1 |= USART_CR1_TE | USART_CR1_RE;
   ```
   
-&nbsp;&nbsp;레퍼런스 27.6.4를 참고하여 연산을 진행하였다.
+&nbsp;&nbsp;레퍼런스 27.6.4를 참고하여 연산을 진행하였다. 
+USART1->CR1 |= (uint32_t)(USART_CR1_TE|USART_CR1_RE);
+2번 비트와 3번 비트에 1을 OR연산으로 입력하여 활성화
 
 ### TODO-9 : stop bit 1로 초기화
 
