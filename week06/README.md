@@ -145,7 +145,7 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   }
   ```
   
-&nbsp;&nbsp;이번 실험에서는 MCO 및 UART 사용을 위한 PORT/PIN 의GPIO 설정을 위해 PA8, PA9, PA10을 사용해야 한다. 따라서 GPIOA->CRH를 0000으로 초기화를 한다. MCO핀은 PA8이 관여를 하고 이를 Alternate function output Push-pull이 되도록 설정했다. USART TX는 PA9핀이고 Alternate function output Push-pull, USART RX는 PA10핀이고 Input with pull-up / pull-down으로 최기화가 필요한데, 이를 위에서 USART Pin Configuration부분에서 처리하였다.
+&nbsp;&nbsp;이번 실험에서는 MCO 및 UART 사용을 위한 PORT/PIN 의GPIO 설정을 위해 PA8, PA9, PA10을 사용해야 한다. 따라서 GPIOA->CRH를 0000으로 초기화를 한다. MCO핀은 PA8이 관여를 하고 이를 Alternate function output Push-pull이 되도록 설정했다. USART TX는 PA9핀이고 Alternate function output Push-pull, USART RX는 PA10핀이고 Input with pull-up / pull-down으로 초기화가 필요한데, 이를 위에서 USART Pin Configuration부분에서 처리하였다.
 &nbsp;&nbsp;Putty에 신호를 보내기 위해서 S1 버튼을 누르는데 GPIO D포트의 11번 핀을 사용한다. 우리가 지금까지 해왔듯, 코드를 0000으로 초기화하고 CNF를 1000으로 설정함으로써 입력값을 전달할 수 있도록 하였다.
 
 ### TODO-6 : 워드비트 8자리로 설정
