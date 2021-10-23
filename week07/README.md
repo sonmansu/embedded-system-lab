@@ -68,5 +68,25 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 
 ### Todo 2
 
+```
+    GPIO_InitTypeDef JoyStick;
+    GPIO_InitTypeDef LED;
+    GPIO_InitTypeDef USART;
+    GPIO_InitTypeDef Button;
+    GPIO_InitTypeDef GPIO_InitStructureRX;
+    GPIO_InitTypeDef GPIO_InitStructureTX;
+```
 
+</br>&nbsp;&nbbsp;GPIO_InitTypeDef 구조체를 활용한다. 조이스틱과 LED, USART, Button, UART RX, UART TX를 설정(configure)하기 위해 구조체를 따로따로 선언한다.
+</br>
+```
+    /* JoyStick up, down pin setting */
+    JoyStick.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;
+    JoyStick.GPIO_Speed = GPIO_Speed_50MHz;
+    JoyStick.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOC, &JoyStick);
+```
+</br>&nbsp;&nbsp;예를 들어서 조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
+</br>&bnsp;&nbsp;LED 등도 이와 비슷한 방식으로 설정하였다.
 
+### Tode 3
