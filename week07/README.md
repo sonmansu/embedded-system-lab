@@ -45,9 +45,9 @@
 </br>&nbsp;&nbsp;NVIC는 여러 인터럽트를 관리하는 레지스터이다. IPR레지스터는 총 5가지 PRIORITY GROUP 으로 구성될 수 있으며 구성에 따라 Preemption Priority 와 Sub Priority 의 개수가 변경된다. Preemption Priority 는 ISR 간 선점 동작에 적용된다. Sub Priority 는 Pending 된 ISR 이 수행되는 우선순위만을 결정하며 선점 동작에는 영향을 미치지 않는다. 
 
 ## 3.실험 과정
-### Todo 1
+### Todo 1(RCC_Configure)
 
-```
+``` C
 void RCC_Configure(void) // stm32f10x_rcc.h 참고
 {
 	// TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'	
@@ -66,9 +66,9 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 
 &nbsp;&nbsp;UART를 사용하기 위해서는 Port A, 조이스틱을 사용하기 위해서는 Port C, LED를 사용하기 위해서는 Port D가 필요하다. 그래서 Port A와 Port C, Port D에 클럭 인가를 하였다. USART1과 Alterbate Function IO를 사용하기 위해서 각각 클럭을 인가하였다.
 
-### Todo 2
+### Todo 2(GPIO_Configure)
 
-```
+``` C
     GPIO_InitTypeDef JoyStick;
     GPIO_InitTypeDef LED;
     GPIO_InitTypeDef USART;
@@ -79,7 +79,7 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 
 </br>&nbsp;&nbbsp;GPIO_InitTypeDef 구조체를 활용한다. 조이스틱과 LED, USART, Button, UART RX, UART TX를 설정(configure)하기 위해 구조체를 따로따로 선언한다.
 </br>
-```
+``` C
     /* JoyStick up, down pin setting */
     JoyStick.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;
     JoyStick.GPIO_Speed = GPIO_Speed_50MHz;
@@ -89,4 +89,54 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 </br>&nbsp;&nbsp;예를 들어서 조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
 </br>&nbsp;&nbsp;LED 등도 이와 비슷한 방식으로 설정하였다.
 
-### Tode 3
+### Todo 3(EXTI_Configure)
+``` C
+    EXTI_InitTypeDef JoyStick_down;
+    EXTI_InitTypeDef JoyStick_up;
+    EXIT_InitTypeDef Button;
+```
+&nbsp;&nbsp;EXIT_InitTypeDef 구조체를 사용하는데, 조이스틱 down, up과 S!버튼을 사용하므로 총 3개를 선언한다.
+</br>
+``` C
+     //Joystick_Down
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);
+    JoyStick_down.EXTI_Line = EXTI_Line2;
+    JoyStick_down.EXTI_Mode = EXTI_Mode_Interrupt;
+    JoyStick_down.EXTI_Trigger = EXTI_Trigger_Falling;
+    JoyStick_down.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&JoyStick_down);
+```
+&nbsp;&nbsp;예를 들어 조이스틱 down의 경우에는 C포트를 사용하고 2번 핀을 사용하므로 GPIO_EXTILineConfig함수로 설정을 하였다. 2번 핀을 사용하므로 EXIT_Line2를 EXTI_Line값으로 주었고, 조이스틱을 조종할 때 인터럽트가 발생하도록 구성을 하였다. EXTI_Init함수로 초기화하였다.
+
+</br>&nbsp;&nbsp;조이스틱 up과 버튼도 비슷한 방식으로 설정하였다.
+
+### Todo 4(USART1_Init)
+&nbsp;&nbsp;USART1에 대해서는 초기 파일에 다음과 같은 정보가 있었다.
+```
+       BaudRate: 9600
+       WordLength: 8bits
+       Parity: None
+       StopBits: 1bit
+       Hardware Flow Control: None
+```
+&nbsp;&nbsp;위를 토대로 다음과 같이 코드를 작성하였다.
+``` C
+	USART_InitTypeDef USART1_InitStructure;
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+```
+&nbsp;&nbsp;클럭 인가를 아래처럼 준다.
+``` C
+	// Enable the USART1 peripheral
+	USART_Cmd(USART1, ENABLE);
+	// TODO: Enable the USART1 RX interrupts using the function 'USART_ITConfig' and the argument value 'Receive Data register not empty interrupt
+	USART_ITConfig(USART1 , USART_IT_RXNE , ENABLE);
+```
+
+### Todo 5(NVIC_Configure)
+
+
+
