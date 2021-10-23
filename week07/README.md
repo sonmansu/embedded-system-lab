@@ -95,7 +95,7 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
     EXTI_InitTypeDef JoyStick_up;
     EXIT_InitTypeDef Button;
 ```
-&nbsp;&nbsp;EXIT_InitTypeDef 구조체를 사용하는데, 조이스틱 down, up과 S!버튼을 사용하므로 총 3개를 선언한다.
+&nbsp;&nbsp;EXIT_InitTypeDef 구조체를 사용하는데, 조이스틱 down, up과 S1버튼을 사용하므로 총 3개를 선언한다.
 </br>
 ``` C
      //Joystick_Down
@@ -137,6 +137,60 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 ```
 
 ### Todo 5(NVIC_Configure)
+``` C
+    NVIC_InitTypeDef JoyStick_down;
+    NVIC_InitTypeDef JoyStick_up;
+    NVIC_InitTypeDef Button;
+    NVIC_InitTypeDef UART1;
+    
+    // TODO: fill the arg you want
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+```
+&nbsp;&nbsp;조이스틱 down, up, S1 Button, UART1의 인트럽트를 관리하기 위해 NVIC_InitTypeDef 구조체를 4개를 선언하였다. 그리고 PriorityGroup은 PreemptionPriority를 4개 사용하므로 4개를 담당할 수 있는 그룹2로 하였다.
+
+``` C
+    // Joystick Down
+    JoyStick_down.NVIC_IRQChannel = EXTI2_IRQn;
+    JoyStick_down.NVIC_IRQChannelPreemptionPriority = 0; // TODO
+    JoyStick_down.NVIC_IRQChannelSubPriority = 0; // TODO
+    JoyStick_down.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&JoyStick_down);
+```
+&nbsp;&nbsp;조이스틱 down은 PC2번이므로 EXTI2_IRQn으로 하였고 PreemptionPriority는 0, SubPriority도 0으로 하였다. 조이스틱 UP은 위의 코드와 비슷하다. 단, PC5번을 쓰므로, EXTI9_5_IRQn을 주었고 PreemptionPrioirty는 1로 주었다.　S1 버튼은 PD11이므로 EXTI15_10_IRQn을 주고 PreemptionPrioirty는 2로 주었다.
+</br>&nbsp;&nbsp;단 UART의 경우에는 다음의 코드가 더 필요하다.
+``` C
+	NVIC_EnableIRQ(USART1_IRQn);
+```
+
+### Todo 6(USART1_IRQHandler())
+``` C
+	uint16_t word;
+	if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
+    	// the most recent received data by the USART1 peripheral
+        	word = USART_ReceiveData(USART1);
+
+        // TODO implement, 키보드 입력 'd' 또는 'u'에 따라 동작
+	switch(word){
+	case 'd':
+        	if(ua_state == 0) ua_state = 0;
+           	else ua_state = 0;
+           	 	break;
+     	case 'p':
+      	        if(ua_state ==0) ua_state =1;
+       	       	else ua_state = 0;
+      	default:
+          ua_state = 0;
+        }
+        // clear 'Read data register not empty' flag
+    	USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+    }
+```
+&nbsp;&nbsp;int ua_state변수는 전역변수로 0으로 초기화되어있다. 이것이 전역변수인 이유는 ua_state변수가 메인 함수에서 동작 제어를 위해 필요하기 때문이다.
+</br>&nbsp;&nbsp;d를 누르면 LED 물결 방향이 위로 가게 해야한다. ua_state가 0이면 물결 방향이 위로 가고, 1이면 물결 방향이 아래로 간다고 하자. 처음에는 물결 방향이 위로 가므로 ua_state = 0인데, d를 누르면 계속 위로 가도록 변화를 주지 않되, 만약 u를 눌러서 ua_state = 1이면 0으로 바꿔주고 break한다.
+</br>&nbsp;&nbsp;p를 누르면 물결 방향이 아래로 가야 한다. ua_state = 0이면 1로 바꿔서 방향이 변하게 하고, 1이면 계속 유지하게 한다.
+</br>&nbsp;&nbsp;그리고 꼭 마지막에는 입력된 데이터를 지우도록 한다!
+
+### Todo 7(EXTI15_10_IRQHandler)
 
 
 
