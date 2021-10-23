@@ -26,6 +26,26 @@
  
 &nbsp;&nbsp;외부 인터럽트/이벤트 컨트롤러는 인터럽트/이벤트 요청을 생성하는 데 사용되는 20개의 에지 감지기 라인으로 구성된다. 각 라인은 트리거 이벤트(상승 에지, 하강 에지, 둘 다)를 선택하도록 독립적으로 구성될 수 있으며 독립적으로 마스킹(masking)될 수 있다. 
 </br>&nbsp;&nbsp;보류 중인 레지스터는 인터럽트 요청의 상태를 유지한다. EXTI는 내부 APB2 클록 주기보다 짧은 펄스 폭을 가진 외부 라인을 감지할 수 있다. 최대 80개의 GPIO를 16개의 외부 인터럽트 라인에 연결할 수 있다.
+</br>&nbsp;nbsp;인터럽트란 코드상에서 인터럽트 핸들러를 실행시키는 것으로 CPU가 관여를 하는 것을 말한다. 이벤트란 주변 하드웨어 장치에서 직접 신호가 전송되어 CPU가 관여하지 않고 처리되는 것을 말한다. 핸들러 코드를 사용하지 않는다.
+
+</br>
+![image](https://user-images.githubusercontent.com/62247273/138541781-50b54115-7726-458e-b287-737dc146a09b.png)
+</br>
+&nbsp;&nbsp;위 그림과 같이 총 16개의 EXTI 라인이 있으며 7개의 IRQ(인터럽트 요구)로 처리된다. 동일한 EXTI에 연결된 핀들은 동시에 인터럽트 소스로 사용될 수 없다. 예를 들어 PA0와 PB0를 인터럽트 소스로 사용할 수 없다. 5~9번 그리고 10~15번 EXTI는 EXTI9_5_IRQ 와 EXTI15_10_IRQ를 함께 사용하기 때문에 인터럽트 핸들러 내부에서 어떤 인터럽트 소스에서 발생하였는지 구분할 필요가 있다. 
+
+### 인터럽트 벡터 테이블
+
+![image](https://user-images.githubusercontent.com/62247273/138541810-65c59f8d-9b6a-4e6f-8e54-f58094041396.png)
+
+</br>&nbsp;&nbsp;여러 가지 인터럽트에 대해 해당 인터럽트 발생시 처리해야 할 루틴의 주소를 보관하고 있는 테이블을 의미한다. 대부분의 CPU는 인터럽트 벡터 테이블을 가지고 있다.
+
+### NVIC(Nested Vectored Interrupt Controller)
+
+![image](https://user-images.githubusercontent.com/62247273/138541833-11a2323b-5fdd-42f4-b413-cdf057f51934.png)
+</br>&nbsp;&nbsp;NVIC는 여러 인터럽트를 관리하는 레지스터이다. IPR레지스터는 총 5가지 PRIORITY GROUP 으로 구성될 수 있으며 구성에 따라 Preemption Priority 와 Sub Priority 의 개수가 변경된다. Preemption Priority 는 ISR 간 선점 동작에 적용된다. Sub Priority 는 Pending 된 ISR 이 수행되는 우선순위만을 결정하며 선점 동작에는 영향을 미치지 않는다. 
+
+
+
 
 
 
