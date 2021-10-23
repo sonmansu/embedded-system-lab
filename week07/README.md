@@ -170,16 +170,16 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
         	word = USART_ReceiveData(USART1);
 
         // TODO implement, 키보드 입력 'd' 또는 'u'에 따라 동작
-	switch(word){
-	case 'd':
-        	if(ua_state == 0) ua_state = 0;
-           	else ua_state = 0;
-           	 	break;
-     	case 'p':
-      	        if(ua_state ==0) ua_state =1;
-       	       	else ua_state = 0;
-      	default:
-          ua_state = 0;
+		switch(word){
+		case 'd':
+        		if(ua_state == 0) ua_state = 0;
+           		else ua_state = 0;
+           	 		break;
+     		case 'p':
+      	      	 	if(ua_state ==0) ua_state =1;
+       	      	 	else ua_state = 0;
+      		default:
+          		ua_state = 0;
         }
         // clear 'Read data register not empty' flag
     	USART_ClearITPendingBit(USART1,USART_IT_RXNE);
@@ -190,7 +190,41 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 </br>&nbsp;&nbsp;p를 누르면 물결 방향이 아래로 가야 한다. ua_state = 0이면 1로 바꿔서 방향이 변하게 하고, 1이면 계속 유지하게 한다.
 </br>&nbsp;&nbsp;그리고 꼭 마지막에는 입력된 데이터를 지우도록 한다!
 
-### Todo 7(EXTI15_10_IRQHandler)
+### Todo 7(EXTI15_10_IRQHandler 등)
+&nbsp;&nbsp;우리는 EXTI2_IRQn, EXTI9_5_IRQn, EXTI15_10_IRQn을 선언했고, 이들을 처리할 핸들러 함수는 EXTI15_10_IRQHandler만 초기 파일에 정의되어 있다. 우선 EXTI15_10_IRQHandler함수를 먼저 살펴보자. Todo 6은 키보드 입력으로 LED 순서를 다루었다면, Todo 7에서는 조이스틱으로 LED를 조종할 수 있도록 하는 것이다.
+``` C
+	if (EXTI_GetITStatus(EXTI_Line11) != RESET) {
+		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {
+			// TODO implement
+            		/* send UART 1 */               
+                	char msg[] ="Team07\r\n";
+                        	for ( i=0; i<15; i ++) {
+                         		SendData(msg[i]);
+                      		}
+                      	Delay();
+		}
+        EXTI_ClearITPendingBit(EXTI_Line11);
+	}
+```
+&nbsp;&nbsp;S1 버튼을 눌러서 Putty에 "Team07\r\n"을 출력하게 하는 것은 지난 실험 때 사용한 SendData함수를 사용한다. S1 버튼은 PD11이고 EXTI_Line11과 관련이 있다. 버튼 입력이 있으면 Putty와 연동해서 데이터 통신을 가능하게 한다. 그리고 마지막에는 EXTI_ClearITPendingBit를 한다.
 
+``` C
+void EXTI2_IRQHandler(){
+   if(EXTI_GetITStatus(EXTI_Line2) != RESET){
+      ua_state = 1;
+      EXTI_ClearITPendingBit(EXTI_Line2);
+   }
+}
+```
+&nbsp;&nbsp;조이스틱 down(PC2)은 LED 순서를 아래로 가게 해야한다. main함수에서 while문이 돌아갈 때, 인터럽트 핸들러에 의해서 ua_state 값을 지정할 수 있다. ua_state가 1이면 LED가 아래로 갈 수 있다. 그렇게 정해주고, 마지막에 EXTI_ClearITPendingBit를 하자.
+``` C
+void EXTI9_5_IRQHandler(){
+   if(EXTI_GetITStatus(EXTI_Line5) != RESET){
+      ua_state = 0;
+      EXTI_ClearITPendingBit(EXTI_Line5);
+   }
+}
+```
+&nbsp;&nbsp;조이스틱 up(PC5)은 LED 순서를 위로 가게 해야한다. ua_state = 0으로 해서 LED 순서를 조정할 수 있도록 한다. 마지막에 EXTI_ClearITPendingBit를 하자.
 
 
