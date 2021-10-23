@@ -77,7 +77,7 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
     GPIO_InitTypeDef GPIO_InitStructureTX;
 ```
 
-</br>&nbsp;&nbbsp;GPIO_InitTypeDef 구조체를 활용한다. 조이스틱과 LED, USART, Button, UART RX, UART TX를 설정(configure)하기 위해 구조체를 따로따로 선언한다.
+</br>&nbsp;&nbsp;GPIO_InitTypeDef 구조체를 활용한다. 조이스틱과 LED, USART, Button, UART RX, UART TX를 설정(configure)하기 위해 구조체를 따로따로 선언한다.
 </br>
 ``` C
     /* JoyStick up, down pin setting */
