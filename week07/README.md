@@ -227,4 +227,47 @@ void EXTI9_5_IRQHandler(){
 ```
 &nbsp;&nbsp;조이스틱 up(PC5)은 LED 순서를 위로 가게 해야한다. ua_state = 0으로 해서 LED 순서를 조정할 수 있도록 한다. 마지막에 EXTI_ClearITPendingBit를 하자.
 
+### Todo 8(LED 점등)
+&nbsp;&nbsp;LED 순서는 2, 3, 4, 7번 순서이다. 이에 맞게 LED를 위로 진행시키고, 아래로 진행시킬 수 있다. LED 점등도 구조체 함수를 이용해서 구현할 수 있다. 여기에서는 위로 LED가 진행하는 함수만 제시하도록 한다.
+``` C
+void led_up(void){	
+         GPIO_ResetBits(GPIOD, GPIO_Pin_2);
+         GPIO_SetBits(GPIOD, GPIO_Pin_7);
+         delay();
+
+         GPIO_ResetBits(GPIOD, GPIO_Pin_7);
+         GPIO_SetBits(GPIOD, GPIO_Pin_4);
+         delay();
+
+         GPIO_ResetBits(GPIOD, GPIO_Pin_4);
+         GPIO_SetBits(GPIOD, GPIO_Pin_3);
+         delay();
+
+         GPIO_ResetBits(GPIOD, GPIO_Pin_3);
+         GPIO_SetBits(GPIOD, GPIO_Pin_2);
+         delay();
+}	 
+```
+
+### Todo 9(main 함수)
+&nbsp;&nbsp;메인 함수에서 우리가 손을 댈 곳은 while문이다. 기기가 작동하면 기본적으로 LED 물결이 윗 방향으로 움직인다. 여기에 우리가 인터럽트를 줄 때, ua_state값을 건드림으로써 LED순서를 조종하려고 한다.
+``` C
+    while (1) {
+    	// TODO: implement   
+    switch(ua_state){
+    case 0:
+    	led_up();
+        break;
+    case 1:
+        led_down();
+        break;
+    }
+``` 
+&nbsp;&nbsp;led_up, led_down 함수 안에 Delay함수가 있어서 따로 넣지는 않았다. 초기 전역 변수 ua_state가 0이므로 기본적으로 case 0이 적용되어 led_up이 된다. 하지만 인터럽트를 이용해서 ua_state값을 1로 만들면 led_down함수가 적용된다.
+&nbsp;&nbsp;이와 별개로 S1 버튼을 누르면 EXTI15_10_IRQHandler함수가 실행되어 Putty에 데이터를 전송할 수 있다.
+
+## 4. 실험 결론
+
+
+
 
