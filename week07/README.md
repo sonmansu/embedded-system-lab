@@ -14,8 +14,11 @@
 ### 폴링
 
 &nbsp;&nbsp;폴링은 Hardware의 변화를 지속적으로 읽어들여 변화를 알아채는 방법이다. 신호를 판단하기 위해 지속적으로 확인해야 한다 다른 일을 하는 중에 신호를 읽을 수 없다
+</br>
 ![image](https://user-images.githubusercontent.com/62247273/138541484-a9d735b1-5da2-49cc-9eda-499b48413f31.png)
 ![image](https://user-images.githubusercontent.com/62247273/138541488-7918b1c1-1e6d-4e5a-aa65-14b9ce2f0f71.png)
+</br>&nbsp;&nbsp;왼쪽이 폴링 방식이고 오른쪽은 인터럽트 방식의 순서도를 나타낸 것이다.
+
 
 
 
