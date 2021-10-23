@@ -44,9 +44,27 @@
 ![image](https://user-images.githubusercontent.com/62247273/138541833-11a2323b-5fdd-42f4-b413-cdf057f51934.png)
 </br>&nbsp;&nbsp;NVIC는 여러 인터럽트를 관리하는 레지스터이다. IPR레지스터는 총 5가지 PRIORITY GROUP 으로 구성될 수 있으며 구성에 따라 Preemption Priority 와 Sub Priority 의 개수가 변경된다. Preemption Priority 는 ISR 간 선점 동작에 적용된다. Sub Priority 는 Pending 된 ISR 이 수행되는 우선순위만을 결정하며 선점 동작에는 영향을 미치지 않는다. 
 
+## 3.실험 과정
+### Todo 1
 
-
-
+```
+void RCC_Configure(void) // stm32f10x_rcc.h 참고
+{
+	// TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'
+	
+	/* UART TX/RX port clock enable */
+         RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA , ENABLE);
+	/* JoyStick Up/Down port clock enable */
+	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+	/* LED port clock enable */
+         
+	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+	/* USART1 clock enable */
+         RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+	/* Alternate Function IO clock enable */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+}
+```
 
 
 
