@@ -87,6 +87,6 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
     GPIO_Init(GPIOC, &JoyStick);
 ```
 </br>&nbsp;&nbsp;예를 들어서 조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
-</br>&bnsp;&nbsp;LED 등도 이와 비슷한 방식으로 설정하였다.
+</br>&nbsp;&nbsp;LED 등도 이와 비슷한 방식으로 설정하였다.
 
 ### Tode 3
