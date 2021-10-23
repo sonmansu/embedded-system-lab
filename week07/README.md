@@ -50,14 +50,12 @@
 ```
 void RCC_Configure(void) // stm32f10x_rcc.h 참고
 {
-	// TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'
-	
+	// TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'	
 	/* UART TX/RX port clock enable */
          RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA , ENABLE);
 	/* JoyStick Up/Down port clock enable */
 	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
-	/* LED port clock enable */
-         
+	/* LED port clock enable */         t
 	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
 	/* USART1 clock enable */
          RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
@@ -66,8 +64,9 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 }
 ```
 
+&nbsp;&nbsp;UART를 사용하기 위해서는 Port A, 조이스틱을 사용하기 위해서는 Port C, LED를 사용하기 위해서는 Port D가 필요하다. 그래서 Port A와 Port C, Port D에 클럭 인가를 하였다. USART1과 Alterbate Function IO를 사용하기 위해서 각각 클럭을 인가하였다.
 
-
+### Todo 2
 
 
 
