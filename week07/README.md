@@ -51,23 +51,31 @@
 	int led_idx = 0; 
 	char msg[] = "Team07\r\n";
 ```
-&nbsp;&nbsp;실습에 사용할 전역 변수이다. mode 변수는 LED의 물결을 제어하기 위해서 사용된다. led_idx 변수는 LED의 점등 순서를 모듈러 연산을 통해 제어하는데 
-### Todo 1(RCC_Configure)
+&nbsp;&nbsp;실습에 사용할 전역 변수이다. mode 변수는 LED의 물결을 제어하기 위해서 사용된다. led_idx 변수는 LED의 점등 순서를 모듈러 연산을 통해 제어하는 데 필요한 변수이다. 그리고 우리조가 Putty 앱을 통해 출력해야할 문자열을 msg 변수에 선언하였다.
 
+### Todo 1(RCC_Configure)
 ``` C
 void RCC_Configure(void) // stm32f10x_rcc.h 참고
 {
-	// TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'	
-	/* UART TX/RX port clock enable */
-         RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA , ENABLE);
-	/* JoyStick Up/Down port clock enable */
-	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
-	/* LED port clock enable */         t
-	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
-	/* USART1 clock enable */
-         RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-	/* Alternate Function IO clock enable */
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+
+    GPIO_InitTypeDef GPIO_LED;
+      // TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'
+
+        /* UART TX/RX port clock enable */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+
+   /* JoyStick Up/Down port clock enable */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+
+
+   /* LED port clock enable */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+   /* USART1 clock enable */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+
+   /* Alternate Function IO clock enable */
+       RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 ```
 
@@ -76,47 +84,77 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 ### Todo 2(GPIO_Configure)
 
 ``` C
-    GPIO_InitTypeDef JoyStick;
-    GPIO_InitTypeDef LED;
-    GPIO_InitTypeDef USART;
-    GPIO_InitTypeDef Button;
-    GPIO_InitTypeDef GPIO_InitStructureRX;
-    GPIO_InitTypeDef GPIO_InitStructureTX;
+	GPIO_InitTypeDef GPIO_InitStructure;
 ```
 
-</br>&nbsp;&nbsp;GPIO_InitTypeDef 구조체를 활용한다. 조이스틱과 LED, USART, Button, UART RX, UART TX를 설정(configure)하기 위해 구조체를 따로따로 선언한다.
+</br>&nbsp;&nbsp;GPIO_InitTypeDef 구조체를 활용한다. GPIO_Pin, GPIO_Speed, GPIO_Mode 변수를 통해 보드를 제어한다.
 </br>
 ``` C
-    /* JoyStick up, down pin setting */
-    JoyStick.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;
-    JoyStick.GPIO_Speed = GPIO_Speed_50MHz;
-    JoyStick.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(GPIOC, &JoyStick);
+   /* JoyStick up, down pin setting  UP(5), DOWN(2)*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+    
+    /* button pin setting */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+    
+    /* LED pin setting*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+   
+    /* UART pin setting */
+    //TX 
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; // PUSH PULL 이었을 때, 통신이 안됨
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    
+    //RX
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
 ```
-</br>&nbsp;&nbsp;예를 들어서 조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
-</br>&nbsp;&nbsp;LED 등도 이와 비슷한 방식으로 설정하였다.
+</br>&nbsp;&nbsp;조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
+</br>&nbsp;&nbsp;S1 버튼은 PD11번 핀, LED는 PC2, 3, 4, 7번 핀을 사용하고 모드도 각각 GPIO_Mode_IPU | GPIO_Mode_IPD와 GPIO_Mode_Out_PP로 설정하였다(버튼은 입력이고, LED는 출력이다).
+</br>&nbsp;&nbsp;UART TX는 PA9번 핀이다. 실험을 하면서 GPIO_Mode 설정의 중요했다. Push Pull로 실험을 했을 때, Putty와 통신이 잘 되지 않았다. 시행착오 끝에 GPIO_Mode를 GPIO_Mode_AF_PP로 설정하였다. UART RX는 PA10번이고 모드는 GPIO_Mode_IPU | GPIO_Mode_IPD로 설정했다.
 
 ### Todo 3(EXTI_Configure)
 ``` C
-    EXTI_InitTypeDef JoyStick_down;
-    EXTI_InitTypeDef JoyStick_up;
-    EXIT_InitTypeDef Button;
-```
-&nbsp;&nbsp;EXIT_InitTypeDef 구조체를 사용하는데, 조이스틱 down, up과 S1버튼을 사용하므로 총 3개를 선언한다.
-</br>
-``` C
-     //Joystick_Down
+	EXTI_InitTypeDef EXTI_InitStructure;
+     /* Joystick Down */
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);
-    JoyStick_down.EXTI_Line = EXTI_Line2;
-    JoyStick_down.EXTI_Mode = EXTI_Mode_Interrupt;
-    JoyStick_down.EXTI_Trigger = EXTI_Trigger_Falling;
-    JoyStick_down.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&JoyStick_down);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line2;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
 ```
-&nbsp;&nbsp;예를 들어 조이스틱 down의 경우에는 C포트를 사용하고 2번 핀을 사용하므로 GPIO_EXTILineConfig함수로 설정을 하였다. 2번 핀을 사용하므로 EXIT_Line2를 EXTI_Line값으로 주었고, 조이스틱을 조종할 때 인터럽트가 발생하도록 구성을 하였다. EXTI_Init함수로 초기화하였다.
+&nbsp;&nbsp;예를 들어 조이스틱 down의 경우에는 C포트를 사용하고 2번 핀을 사용하므로 GPIO_EXTILineConfig함수의 매개변수로 (GPIO_PortSourceGPIOC, GPIO_PinSource2)를 주었다.. 2번 핀을 사용하므로 EXIT_Line2를 EXTI_Line값으로 주었고, 조이스틱을 조종할 때 인터럽트가 발생하도록 구성을 하였다. 조이스틱의 경우 입력이 없으면 1이고 들어오면 0이 되므로 trigger유형은 falling에 해당한다. 마지막으로 EXTI_Init함수로 초기화하였다.
 
-</br>&nbsp;&nbsp;조이스틱 up과 버튼도 비슷한 방식으로 설정하였다.
+``` C
+    /* Joystick Up */
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource5);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line5;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
 
+    /* Button */
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource11);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line11;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
+```    
+</br>&nbsp;&nbsp;조이스틱 up과 S1 버튼도 같은 방식으로 설정을 하면 된다. 조이스틱 up은 PC5q번, S1 버튼은 PD11이므로 각각 EXTI라인을 5번과 11번에 설정하면 된다. 
+.
 ### Todo 4(USART1_Init)
 &nbsp;&nbsp;USART1에 대해서는 초기 파일에 다음과 같은 정보가 있었다.
 ```
@@ -126,7 +164,7 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
        StopBits: 1bit
        Hardware Flow Control: None
 ```
-&nbsp;&nbsp;위를 토대로 다음과 같이 코드를 작성하였다.
+&nbsp;&nbsp;BaudRate는 9600, 워드길이는 8비트이고 tx,rx를 모두 이용할 것이기 때문에 mode설정, 플로우 컨트롤은 disable(none)이다. 패리티를 이용하지 않기 때문에 Parity는 None로 설정하고, 스톱비트는 1로 주었다. 위를 토대로 다음과 같이 코드를 작성하였다.
 ``` C
 	USART_InitTypeDef USART1_InitStructure;
 	USART_InitStructure.USART_BaudRate = 9600;
@@ -145,136 +183,146 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 
 ### Todo 5(NVIC_Configure)
 ``` C
-    NVIC_InitTypeDef JoyStick_down;
-    NVIC_InitTypeDef JoyStick_up;
-    NVIC_InitTypeDef Button;
-    NVIC_InitTypeDef UART1;
-    
-    // TODO: fill the arg you want
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	NVIC_InitTypeDef NVIC_InitStructure;
+	// TODO: fill the arg you want
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 ```
-&nbsp;&nbsp;조이스틱 down, up, S1 Button, UART1의 인트럽트를 관리하기 위해 NVIC_InitTypeDef 구조체를 4개를 선언하였다. 그리고 PriorityGroup은 PreemptionPriority를 4개 사용하므로 4개를 담당할 수 있는 그룹2로 하였다.
+&nbsp;&nbsp;조이스틱 down, up, S1 Button, UART1의 인트럽트를 관리하기 위해 NVIC_InitTypeDef 구조체를 선언하였다. 
+``` C
+	NVIC_Init(&NVIC_InitStructure);
+        // Joystick Down
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
 
-``` C
-    // Joystick Down
-    JoyStick_down.NVIC_IRQChannel = EXTI2_IRQn;
-    JoyStick_down.NVIC_IRQChannelPreemptionPriority = 0; // TODO
-    JoyStick_down.NVIC_IRQChannelSubPriority = 0; // TODO
-    JoyStick_down.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&JoyStick_down);
+        // Joystick Up
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
+
+        // User S1 Button
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
+
+        // UART1
+        // 'NVIC_EnableIRQ' is only required for USART setting
+        NVIC_EnableIRQ(USART1_IRQn);
+        NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; // TODO
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
 ```
-&nbsp;&nbsp;조이스틱 down은 PC2번이므로 EXTI2_IRQn으로 하였고 PreemptionPriority는 0, SubPriority도 0으로 하였다. 조이스틱 UP은 위의 코드와 비슷하다. 단, PC5번을 쓰므로, EXTI9_5_IRQn을 주었고 PreemptionPrioirty는 1로 주었다.　S1 버튼은 PD11이므로 EXTI15_10_IRQn을 주고 PreemptionPrioirty는 2로 주었다.
-</br>&nbsp;&nbsp;단 UART의 경우에는 다음의 코드가 더 필요하다.
-``` C
-	NVIC_EnableIRQ(USART1_IRQn);
-```
+&nbsp;&nbsp;NVIC_IRQChannel을 설정하여 어떤 exit line의 인터럽트를 확인할지를 정할 수 있다. preemptionPriority와 subPriority를 정하는데, 조이스틱 간에는 동시에 입력이 이루어 지지 않기 때문에 서로 인터럽트가 겹칠 우려가 없다. 그래서 우선순위를 동일하게 작성하였다. UART 통신 관련 코드에 대해서는 최고 우선순위인 0을 설정했다.
 
 ### Todo 6(USART1_IRQHandler())
 ``` C
 	uint16_t word;
-	if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
-    	// the most recent received data by the USART1 peripheral
+        if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
+        // the most recent received data by the USART1 peripheral
         	word = USART_ReceiveData(USART1);
-
-        // TODO implement, 키보드 입력 'd' 또는 'u'에 따라 동작
-		switch(word){
-		case 'd':
-        		if(ua_state == 0) ua_state = 0;
-           		else ua_state = 0;
-           	 		break;
-     		case 'p':
-      	      	 	if(ua_state ==0) ua_state =1;
-       	      	 	else ua_state = 0;
-      		default:
-          		ua_state = 0;
-        }
+        	// TODO implement, 키보드 입력 'd' 또는 'u'에 따라 동작
+        	if (word == 'u') {
+                // A 동작
+                	mode = 0;
+        	} else if (word == 'd') {
+                // B 동작
+                	mode = 1;
+        	}
         // clear 'Read data register not empty' flag
-    	USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+        USART_ClearITPendingBit(USART1,USART_IT_RXNE);
     }
 ```
-&nbsp;&nbsp;int ua_state변수는 전역변수로 0으로 초기화되어있다. 이것이 전역변수인 이유는 ua_state변수가 메인 함수에서 동작 제어를 위해 필요하기 때문이다.
-</br>&nbsp;&nbsp;d를 누르면 LED 물결 방향이 위로 가게 해야한다. ua_state가 0이면 물결 방향이 위로 가고, 1이면 물결 방향이 아래로 간다고 하자. 처음에는 물결 방향이 위로 가므로 ua_state = 0인데, d를 누르면 계속 위로 가도록 변화를 주지 않되, 만약 u를 눌러서 ua_state = 1이면 0으로 바꿔주고 break한다.
-</br>&nbsp;&nbsp;p를 누르면 물결 방향이 아래로 가야 한다. ua_state = 0이면 1로 바꿔서 방향이 변하게 하고, 1이면 계속 유지하게 한다.
-</br>&nbsp;&nbsp;그리고 꼭 마지막에는 입력된 데이터를 지우도록 한다!
+&nbsp;&nbsp;mode 변수는 전역변수로 0으로 초기화되어있다. mode = 0이면 물결 방향이 1->2->3->4 위로 가도록(미션지의 A동작), mode = 1이면 물결 방향이 4->3->2->1 아래로 가도록(미션지의 B동작)을 하도록 한다. 키보드로 u를 누르면 A동작을 하고, d를 누르면 B동작을 하도록 mode에 대입되는 값을 달리 설정하였다.
+
 
 ### Todo 7(EXTI15_10_IRQHandler 등)
 &nbsp;&nbsp;우리는 EXTI2_IRQn, EXTI9_5_IRQn, EXTI15_10_IRQn을 선언했고, 이들을 처리할 핸들러 함수는 EXTI15_10_IRQHandler만 초기 파일에 정의되어 있다. 우선 EXTI15_10_IRQHandler함수를 먼저 살펴보자. Todo 6은 키보드 입력으로 LED 순서를 다루었다면, Todo 7에서는 조이스틱으로 LED를 조종할 수 있도록 하는 것이다.
 ``` C
 	if (EXTI_GetITStatus(EXTI_Line11) != RESET) {
-		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {
-			// TODO implement
-            		/* send UART 1 */               
-                	char msg[] ="Team07\r\n";
-                        	for ( i=0; i<15; i ++) {
-                         		SendData(msg[i]);
-                      		}
-                      	Delay();
-		}
+        	if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {
+                	mode = 1;
+                	// TODO implement
+                 	/* send UART 1 */
+                        char *tmp = &msg[0];
+                	while (*tmp != '\0') {
+                		sendDataUART1(*tmp);
+                		tmp++;
+              		}
+      		}
         EXTI_ClearITPendingBit(EXTI_Line11);
 	}
 ```
 &nbsp;&nbsp;S1 버튼을 눌러서 Putty에 "Team07\r\n"을 출력하게 하는 것은 지난 실험 때 사용한 SendData함수를 사용한다. S1 버튼은 PD11이고 EXTI_Line11과 관련이 있다. 버튼 입력이 있으면 Putty와 연동해서 데이터 통신을 가능하게 한다. 그리고 마지막에는 EXTI_ClearITPendingBit를 한다.
 
 ``` C
-void EXTI2_IRQHandler(){
-   if(EXTI_GetITStatus(EXTI_Line2) != RESET){
-      ua_state = 1;
-      EXTI_ClearITPendingBit(EXTI_Line2);
-   }
-}
+	void EXTI2_IRQHandler(void) {
+  	// up
+  		if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
+      			if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET) {
+                		mode = 0;
+      			}
+        		EXTI_ClearITPendingBit(EXTI_Line2);
+   		}
+	}
 ```
-&nbsp;&nbsp;조이스틱 down(PC2)은 LED 순서를 아래로 가게 해야한다. main함수에서 while문이 돌아갈 때, 인터럽트 핸들러에 의해서 ua_state 값을 지정할 수 있다. ua_state가 1이면 LED가 아래로 갈 수 있다. 그렇게 정해주고, 마지막에 EXTI_ClearITPendingBit를 하자.
+&nbsp;&nbsp;조이스틱 down(PC2)은 LED 순서를 아래로 가게 해야한다. main함수에서 while문이 돌아갈 때, 인터럽트 핸들러에 의해서 mode 값을 지정할 수 있다. mode가 1이면 LED가 아래로 갈 수 있다. 그렇게 정해주고, 마지막에 EXTI_ClearITPendingBit를 하자.
 ``` C
-void EXTI9_5_IRQHandler(){
-   if(EXTI_GetITStatus(EXTI_Line5) != RESET){
-      ua_state = 0;
-      EXTI_ClearITPendingBit(EXTI_Line5);
-   }
-}
+	void EXTI9_5_IRQHandler(void) {
+  	// down
+  		if (EXTI_GetITStatus(EXTI_Line5) != RESET) {
+      			if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET) {
+                  		mode = 1;
+      			}
+        		EXTI_ClearITPendingBit(EXTI_Line5);
+   		}
+	}
 ```
 &nbsp;&nbsp;조이스틱 up(PC5)은 LED 순서를 위로 가게 해야한다. ua_state = 0으로 해서 LED 순서를 조정할 수 있도록 한다. 마지막에 EXTI_ClearITPendingBit를 하자.
 
-### Todo 8(LED 점등)
-&nbsp;&nbsp;LED 순서는 2, 3, 4, 7번 순서이다. 이에 맞게 LED를 위로 진행시키고, 아래로 진행시킬 수 있다. LED 점등도 구조체 함수를 이용해서 구현할 수 있다. 여기에서는 위로 LED가 진행하는 함수만 제시하도록 한다.
+
+### Todo 8(main 함수)
 ``` C
-void led_up(void){	
-         GPIO_ResetBits(GPIOD, GPIO_Pin_2);
-         GPIO_SetBits(GPIOD, GPIO_Pin_7);
-         delay();
-
-         GPIO_ResetBits(GPIOD, GPIO_Pin_7);
-         GPIO_SetBits(GPIOD, GPIO_Pin_4);
-         delay();
-
-         GPIO_ResetBits(GPIOD, GPIO_Pin_4);
-         GPIO_SetBits(GPIOD, GPIO_Pin_3);
-         delay();
-
-         GPIO_ResetBits(GPIOD, GPIO_Pin_3);
-         GPIO_SetBits(GPIOD, GPIO_Pin_2);
-         delay();
-}	 
+	unsigned led_array[4] = {
+        	GPIO_Pin_2,
+      		GPIO_Pin_3,
+      		GPIO_Pin_4,
+      		GPIO_Pin_7,
+    	};
 ```
+&nbsp;&nbsp;위 배열은 각각 LED의 PD2, 3, 5, 7번 핀과 대응한다.
 
-### Todo 9(main 함수)
-&nbsp;&nbsp;메인 함수에서 우리가 손을 댈 곳은 while문이다. 기기가 작동하면 기본적으로 LED 물결이 윗 방향으로 움직인다. 여기에 우리가 인터럽트를 줄 때, ua_state값을 건드림으로써 LED순서를 조종하려고 한다.
 ``` C
-    while (1) {
-    	// TODO: implement   
-    switch(ua_state){
-    case 0:
-    	led_up();
-        break;
-    case 1:
-        led_down();
-        break;
-    }
+	while (1) {
+        // TODO: implement 
+        	int index = led_idx % 4;
+        	for (int i = 0; i < 4; ++i) {
+          		if (i == index) {
+                		GPIO_SetBits(GPIOD, led_array[i]);
+          		} else {
+                		GPIO_ResetBits(GPIOD, led_array[i]);
+                	}
+        	}
+        
+       		// Delay
+       		Delay();
+       		if (mode == 0) {
+       			led_idx++;
+       		} else {
+        		led_idx--;
+      		}
+    	}
 ``` 
-&nbsp;&nbsp;led_up, led_down 함수 안에 Delay함수가 있어서 따로 넣지는 않았다. 초기 전역 변수 ua_state가 0이므로 기본적으로 case 0이 적용되어 led_up이 된다. 하지만 인터럽트를 이용해서 ua_state값을 1로 만들면 led_down함수가 적용된다.
-&nbsp;&nbsp;이와 별개로 S1 버튼을 누르면 EXTI15_10_IRQHandler함수가 실행되어 Putty에 데이터를 전송할 수 있다.
+&nbsp;&nbsp;led_idx변수를 4 모듈러 연산을 해서 결정된 index값을 통해 점등할 LED와 소등할 LED를 정한다. 그리고 모드 상태에 따라 led_idx를 증가시키거나 감소시킴으로써 LED 점등 순서를 위로 하거나 아래로 할 수 있다.
 
-## 4. 실험 결론
-
-
-
+## 5. 실험 결론
+&nbsp;&nbsp이번 실험에서 지난 실험 미션에서 다루었던 putty 통신과 LED 점등, 조이스틱, 버튼 조작을 모두 활용하였다. 지금까지 이론으로서만 다루었던 인터럽트를 실제로 구현해봄으로써 임베디드 시스템에 더욱 이해할 수 있게 되었다. 인터럽트를 발생시키고, 이를 EXTI에 전달하여 NVIC를 통해 우선순위를 활용하고, 최종적으로 핸들러 함수를 통해 인터럽트를 처리하는 순서를 알게되었다.
+이번 미션의 핵심은 인터럽트였기에 앞으로도 인터럽트를 잘 처리할 수 있도록 능력을 배양해야겠다.
 
