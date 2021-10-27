@@ -42,9 +42,16 @@
 ### NVIC(Nested Vectored Interrupt Controller)
 
 ![image](https://user-images.githubusercontent.com/62247273/138541833-11a2323b-5fdd-42f4-b413-cdf057f51934.png)
-</br>&nbsp;&nbsp;NVIC는 여러 인터럽트를 관리하는 레지스터이다. IPR레지스터는 총 5가지 PRIORITY GROUP 으로 구성될 수 있으며 구성에 따라 Preemption Priority 와 Sub Priority 의 개수가 변경된다. Preemption Priority 는 ISR 간 선점 동작에 적용된다. Sub Priority 는 Pending 된 ISR 이 수행되는 우선순위만을 결정하며 선점 동작에는 영향을 미치지 않는다. 
+</br>&nbsp;&nbsp;NVIC는 Nested vectored interrupt controller의 약자로, 중첩된 인터럽트를 관리하는 역할을 한다. 인터럽트는 동시에 여러 개가 발생할 수 있어서, 처리할 때 우선순위를 정할 필요가 있다. 우선순위가 높은 이벤트는 먼저 처리되고 낮은 이벤트는 나중에 처리된다. 우선순위에는 preemption priority와 sub priority가 있는데, preemption priority에 따라 인터럽트가 우선적으로 처리되며, 우선순위가 동일한 경우에는 sub priority에 따라서 인터럽트를 처리한다. 이러한 우선순위에 따른 인터럽트의 총체적 관리를 NVIC가 담당한다. 그러므로 인터럽트를 활용하기 위해 NVIC와 관련된 레지스터 설정이 필요하다. 만약 하나의 인터럽트 처리 도중에 우선순위가 더 높은 인터럽트가 발생한다면 우선순위를 사용하여 새로 발생한 인터럽트를 우선 수행한 뒤에 마저 수행한다. 값이 작을수록 우선순위가 높다. 
 
-## 3.실험 과정
+## 3. 실습 설명
+### Todo 0
+``` C
+	int mode = 0; 
+	int led_idx = 0; 
+	char msg[] = "Team07\r\n";
+```
+&nbsp;&nbsp;실습에 사용할 전역 변수이다. mode 변수는 LED의 물결을 제어하기 위해서 사용된다. led_idx 변수는 LED의 점등 순서를 모듈러 연산을 통해 제어하는데 
 ### Todo 1(RCC_Configure)
 
 ``` C
