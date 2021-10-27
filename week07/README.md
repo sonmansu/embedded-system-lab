@@ -176,7 +176,8 @@ void RCC_Configure(void) {// stm32f10x_rcc.h 참고
 ``` C
 	// Enable the USART1 peripheral
 	USART_Cmd(USART1, ENABLE);
-	// TODO: Enable the USART1 RX interrupts using the function 'USART_ITConfig' and the argument value 'Receive Data register not empty interrupt
+	/* TODO: Enable the USART1 RX interrupts using the function 'USART_ITConfig' and 
+	the argument value 'Receive Data register not empty interrupt */
 	USART_ITConfig(USART1 , USART_IT_RXNE , ENABLE);
 ```
 
