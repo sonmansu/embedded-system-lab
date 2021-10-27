@@ -48,10 +48,10 @@
 ### Todo 0
 ``` C
 	int mode = 0; 
-	int led_idx = 0; 
+	int idx = 0; 
 	char msg[] = "Team07\r\n";
 ```
-&nbsp;&nbsp;실습에 사용할 전역 변수이다. mode 변수는 LED의 물결을 제어하기 위해서 사용된다. led_idx 변수는 LED의 점등 순서를 모듈러 연산을 통해 제어하는 데 필요한 변수이다. 그리고 우리조가 Putty 앱을 통해 출력해야할 문자열을 msg 변수에 선언하였다.
+&nbsp;&nbsp;실습에 사용할 전역 변수이다. mode 변수는 LED의 물결을 제어하기 위해서 사용된다. idx 변수는 LED의 점등 순서를 모듈러 연산을 통해 제어하는 데 필요한 변수이다. 그리고 우리조가 Putty 앱을 통해 출력해야할 문자열을 msg 변수에 선언하였다.
 
 ### Todo 1(RCC_Configure)
 ``` C
@@ -302,7 +302,7 @@ void EXTI2_IRQHandler(void) {
 ``` C
 	while (1) {
         // TODO: implement 
-        	int index = led_idx % 4;
+        	int index = idx % 4;
         	for (int i = 0; i < 4; ++i) {
           		if (i == index) {
                 		GPIO_SetBits(GPIOD, led_array[i]);
@@ -314,13 +314,13 @@ void EXTI2_IRQHandler(void) {
        		// Delay
        		Delay();
        		if (mode == 0) {
-       			led_idx++;
+       			idx++;
        		} else {
-        		led_idx--;
+        		idx--;
       		}
     	}
 ``` 
-&nbsp;&nbsp;led_idx변수를 4 모듈러 연산을 해서 결정된 index값을 통해 점등할 LED와 소등할 LED를 정한다. 그리고 모드 상태에 따라 led_idx를 증가시키거나 감소시킴으로써 LED 점등 순서를 위로 하거나 아래로 할 수 있다.
+&nbsp;&nbsp;idx변수를 4 모듈러 연산을 해서 결정된 index값을 통해 점등할 LED와 소등할 LED를 정한다. 그리고 모드 상태에 따라 idx를 증가시키거나 감소시킴으로써 LED 점등 순서를 위로 하거나 아래로 할 수 있다.
 
 ## 5. 실험 결론
 &nbsp;&nbsp;이번 실험에서 지난 실험 미션에서 다루었던 putty 통신과 LED 점등, 조이스틱, 버튼 조작을 모두 활용하였다. 지금까지 이론으로서만 다루었던 인터럽트를 실제로 구현해봄으로써 임베디드 시스템에 더욱 이해할 수 있게 되었다. 인터럽트를 발생시키고, 이를 EXTI에 전달하여 NVIC를 통해 우선순위를 활용하고, 최종적으로 핸들러 함수를 통해 인터럽트를 처리하는 순서를 알게되었다.
