@@ -15,7 +15,7 @@
 
 ### 폴링
 
-&nbsp;&nbsp;폴링은 Hardware의 변화를 지속적으로 읽어들여 변화를 알아채는 방법이다. 신호를 판단하기 위해 지속적으로 확인해야 한다 다른 일을 하는 중에 신호를 읽을 수 없다
+&nbsp;&nbsp;폴링은 Hardware의 변화를 지속적으로 읽어들여 변화를 알아채는 방법이다. 신호를 판단하기 위해 지속적으로 확인해야 한다 다른 일을 하는 중에 신호를 읽을 수 없다.
 </br>
 ![image](https://user-images.githubusercontent.com/62247273/138541484-a9d735b1-5da2-49cc-9eda-499b48413f31.png)
 ![image](https://user-images.githubusercontent.com/62247273/138541488-7918b1c1-1e6d-4e5a-aa65-14b9ce2f0f71.png)
@@ -55,26 +55,25 @@
 
 ### Todo 1(RCC_Configure)
 ``` C
-void RCC_Configure(void) // stm32f10x_rcc.h 참고
-{
+void RCC_Configure(void) {// stm32f10x_rcc.h 참고
 
-    GPIO_InitTypeDef GPIO_LED;
-      // TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'
+	GPIO_InitTypeDef GPIO_LED;
+        // TODO: Enable the APB2 peripheral clock using the function 'RCC_APB2PeriphClockCmd'
 
         /* UART TX/RX port clock enable */
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-   /* JoyStick Up/Down port clock enable */
+        /* JoyStick Up/Down port clock enable */
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
 
-   /* LED port clock enable */
+        /* LED port clock enable */
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
 
-   /* USART1 clock enable */
+        /* USART1 clock enable */
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 
-   /* Alternate Function IO clock enable */
+       /* Alternate Function IO clock enable */
        RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 ```
@@ -121,11 +120,11 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 ```
 </br>&nbsp;&nbsp;조이스틱은 위, 아래로 움직일 때 2번 핀과 5번 핀을 사용한다. 출력은 최대 스피드인 50MHz, GPIO 모드는 인풋 풀업 상태로 설정하였다.
 </br>&nbsp;&nbsp;S1 버튼은 PD11번 핀, LED는 PC2, 3, 4, 7번 핀을 사용하고 모드도 각각 GPIO_Mode_IPU | GPIO_Mode_IPD와 GPIO_Mode_Out_PP로 설정하였다(버튼은 입력이고, LED는 출력이다).
-</br>&nbsp;&nbsp;UART TX는 PA9번 핀이다. 실험을 하면서 GPIO_Mode 설정의 중요했다. Push Pull로 실험을 했을 때, Putty와 통신이 잘 되지 않았다. 시행착오 끝에 GPIO_Mode를 GPIO_Mode_AF_PP로 설정하였다. UART RX는 PA10번이고 모드는 GPIO_Mode_IPU | GPIO_Mode_IPD로 설정했다.
+</br>&nbsp;&nbsp;UART TX는 PA9번 핀이다. 실험을 하면서 GPIO_Mode 설정의 중요했다. Push Pull로 실험을 했을 때, Putty와 통신이 잘 되지 않았다. 시행착오 끝에 GPIO_Mode를 GPIO_Mode_AF_PP로 설정하였다(Alternate function이므로, GPIO_Mode_AF_PP). UART RX는 PA10번이고 모드는 GPIO_Mode_IPU | GPIO_Mode_IPD로 설정했다.
 
 ### Todo 3(EXTI_Configure)
 ``` C
-	EXTI_InitTypeDef EXTI_InitStructure;
+    EXTI_InitTypeDef EXTI_InitStructure;
      /* Joystick Down */
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource2);
     EXTI_InitStructure.EXTI_Line = EXTI_Line2;
@@ -263,13 +262,13 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 &nbsp;&nbsp;S1 버튼을 눌러서 Putty에 "Team07\r\n"을 출력하게 하는 것은 지난 실험 때 사용한 SendData함수를 사용한다. S1 버튼은 PD11이고 EXTI_Line11과 관련이 있다. 버튼 입력이 있으면 Putty와 연동해서 데이터 통신을 가능하게 한다. 그리고 마지막에는 EXTI_ClearITPendingBit를 한다.
 
 ``` C
-	void EXTI2_IRQHandler(void) {
+void EXTI2_IRQHandler(void) {
   	// up
-  		if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
-      			if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET) {
-                		mode = 0;
-      			}
-        		EXTI_ClearITPendingBit(EXTI_Line2);
+  	if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
+      		if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET) {
+               		mode = 0;
+   		}
+       		EXTI_ClearITPendingBit(EXTI_Line2);
    		}
 	}
 ```
