@@ -284,7 +284,7 @@ void EXTI2_IRQHandler(void) {
    		}
 	}
 ```
-&nbsp;&nbsp;조이스틱 up(PC5)은 LED 순서를 위로 가게 해야한다. ua_state = 0으로 해서 LED 순서를 조정할 수 있도록 한다. 마지막에 EXTI_ClearITPendingBit를 하자.
+&nbsp;&nbsp;조이스틱 up(PC5)은 LED 순서를 위로 가게 해야한다. mode = 0으로 해서 LED 순서를 조정할 수 있도록 한다. </br>마지막에 EXTI_ClearITPendingBit를 하자.
 
 
 ### Todo 8(main 함수)
