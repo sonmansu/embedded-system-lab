@@ -1,6 +1,6 @@
 # 임베디드 시스템 설계 및 실험 6주차 결과 보고서
 7조 이석우, 손수민, 김춘수, 정지용
- 
+
 ## 1. 실험 목표
 1. 라이브러리를 활용하여 코드 작성
 2. Clock Tree 의 이해 및 사용자 Clock 설정
@@ -10,8 +10,16 @@
 ## 2. 실험 이론 
 ### UART와 USART
 
-&nbsp;&nbsp;UART는 Universal Asynchronous Receiver/Transmitter의 약자로, 마이크로 컨트롤러에서 사용되어 온 통신 방식 중의 하나이다. 속도가 상대적으로 느리고 통신거리가 짧지만, 근거리에서 소량의 데이터를 보낼 때 유용하다. UART는 비동기 통신 방식을 채택하여, 데이터의 원활한 송수신을 위해서 clock을 대체할 수단이 필요하다. Start bit, stop bit, baud rate로 이를 대체한다. USART는 Universal Synchronous and  Asynchronous serial Receiver/Transmitter의 약자로, UART이면서 때로는 clock에 따라 데이터를 보내거나 받을 수 있는 차이점이 있다.
-  
+Serial Communication (직렬 통신)은 하나의 데이터 선을 이용해 비트를 차례로 보내는 방법으로, UART와 USART 방식이 있다.
+
+- UART (Universal Asynchronous Receiver/Transmitter)
+
+  속도가 상대적으로 느리고 통신거리가 짧지만, 근거리에서 소량의 데이터를 보낼 때 유용하다. UART는 비동기 통신 방식을 채택하여, 데이터의 원활한 송수신을 위해서 clock을 대체할 수단이 필요하다. Start bit, stop bit, baud rate로 이를 대체한다. 
+
+- USART (Universal Synchronous and  Asynchronous serial Receiver/Transmitter)
+
+  UART이면서 때로는 clock에 따라 데이터를 보내거나 받을 수 있는 차이점이 있다.
+
 ### Start bit/Stop bit
 
 &nbsp;&nbsp;UART는 일반적으로 데이터를 전송하지 않을 때 데이터 전송 라인이 고전압 상태를 유지한다. 수신 UART가 고전압에서 저전압으로의 변화를 감지했을 때, baud rate의 주파수에서 데이터 프레임의 비트를 읽기 시작하는데 이 때 쓰이는 것이 start bit이다. stop bit는 전송되는 데이터 패킷의 끝을 신호하기 위해 필요하다.
@@ -21,59 +29,62 @@
 ![화면 캡처 2021-10-11 003334](https://user-images.githubusercontent.com/64721658/136702777-3943caf5-fba5-40ea-a442-38783cf7c419.png)
 
 ### HSE/HIS CLOCK
-&nbsp;&nbsp;CLOCK은 주기적인 전기적 펄스로, 정해진 CLOCK에 따라 모든 동작이 발생한다. HSE, HIS 두가지 CLOCK이 발생하는데, HSE의 경우 보드 외부에서 발생하는 CLOCK으로 실험에서 사용하는 보드는 25MHZ로 설정되어 있다. HIS의 경우 보드 내부 CLOCK으로 기본 8MHZ이다. 시스템 내부의
-CLOCK은 HSI, HSE, PLL중 하나이다. PLL은 위상 동기 회로이며, 입력 신호와 출력신호를 이용해 출력신호를 제어하는 시스템을 말한다.PLL은 HIS와 HSE CLOCK을 곱하거나 나누는 연산으로 원하는 주파수 값을 생성할 수 있다. 이번 실험에서 맡아야 할 첫 번째 파트이다.
+&nbsp;&nbsp;CLOCK은 주기적인 전기적 펄스로, 정해진 CLOCK에 따라 모든 동작이 발생한다. HSE, HIS 두가지 CLOCK이 발생하는데, HSE의 경우 보드 외부에서 발생하는 CLOCK으로 실험에서 사용하는 보드는 25MHZ로 설정되어 있다. HIS의 경우 보드 내부 CLOCK으로 기본 8MHZ이다. 시스템 내부의 CLOCK은 HSI, HSE, PLL중 하나이다. PLL은 위상 동기 회로이며, 입력 신호와 출력신호를 이용해 출력신호를 제어하는 시스템을 말한다.PLL은 HIS와 HSE CLOCK을 곱하거나 나누는 연산으로 원하는 주파수 값을 생성할 수 있다. 이번 실험에서 맡아야 할 첫 번째 파트이다.
 
 ### Clock Tree
-&nbsp;&nbsp;기기의 clock을 어떻게 조정하고 다루는 지를 알기 위해서는 시스템이 제공하는 clock tree를 참고하여 확인할 수 있다. Stm32는 기본적으로 내장 clock이 있다. 필요에 따라 외부의 clock을 사용할 수 있도록 제작되었다.OSC_IN이라는 외부 clock 입력부에 외부 clock을 연결하고 clock tree를 설정해 주면 외부 clock을 이용할 수 있다. MCO는 microcontroller clock output의 약자로, 컨트롤러의 특정 clock을 곧바로 출력해주어 사용자가 clock을 확인할 수 있도록 한다. mco출력 부 바로 앞에 mux가 있어 어떤 clock을 출력을 할 것인지를 mco비트를 통하여 선택할 수 있다. Clock의 주파수를 사용자가 조정하기 위해서는 곱하기와 나누기 연산을 이용하여야 한다.
+&nbsp;&nbsp;기기의 clock을 어떻게 조정하고 다루는 지를 알기 위해서는 시스템이 제공하는 clock tree를 참고하여 확인할 수 있다. Stm32는 기본적으로 내장 clock이 있다. 필요에 따라 외부의 clock을 사용할 수 있도록 제작되었다. OSC_IN이라는 외부 clock 입력부에 외부 clock을 연결하고 clock tree를 설정해 주면 외부 clock을 이용할 수 있다.    
+
+&nbsp;MCO는 microcontroller clock output의 약자로, 컨트롤러의 특정 clock을 곧바로 출력해주어 사용자가 clock을 확인할 수 있도록 한다. mco 출력부 바로 앞에 mux가 있어 어떤 clock을 출력을 할 것인지를 mco비트를 통하여 선택할 수 있다. 
 
 ![AS2737](https://user-images.githubusercontent.com/64721658/136702979-331eb405-07ee-4cba-b495-50025ba84d4c.png)
 
-곱하기, 나누기 연산을 진행할 수 있는 부분은 prediv2, pll2mul, pll3mul,pllmul이 있다. 제일 먼저 클럭은 OSC_IN으로 들어온다. 이를
-PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결정할 수 있다. OSC클럭을 사용하기로 결정하면, PREDIV1SCR MUX에
-서 CLOCK을 내보내기 전에 PREDIV2, PRE2MUL에서 클럭값을 배분할 수 있다. 배분된 클럭은 PREDIV1SCR로 그리고 PLLSCR MUX에서 다시 HIS
-와 해당 주파수 중 하나를 선택하게 된다. 이렇게 나온 최종값이 PLLCLK 가 된다. 그 후 PLLMUL에서 CLOCK배분을 하고, 최종적으로 SW MUX에
-서 HSE,HSI,PLLCLK 중 하나를 선택하게 된다. 이 값이 SYSCLK 시스템 클럭이 된다. MCO MUX 에서 SYSCLK를 선택하고, MCO를 PROBE하여 오
-실로스코프로 확인하면 시스템 클럭을 관찰할 수 있다.
+&nbsp;Clock의 주파수를 사용자가 조정하기 위해서는 곱하기와 나누기 연산을 이용하여야 한다. 곱하기, 나누기 연산을 진행할 수 있는 부분은 prediv2, pll2mul, pll3mul,pllmul이 있다. 제일 먼저 클럭은 OSC_IN으로 들어온다. 이를 PREDIV1SCR MUX에서 HSE 클럭을 이용할 지, OSC CLOCK을 사용할 지 결정할 수 있다. OSC클럭을 사용하기로 결정하면, PREDIV1SCR MUX에
+서 CLOCK을 내보내기 전에 PREDIV2, PRE2MUL에서 클럭값을 배분할 수 있다. 배분된 클럭은 PREDIV1SCR로 그리고 PLLSCR MUX에서 다시 HSI 와 해당 주파수 중 하나를 선택하게 된다. 이렇게 나온 최종값이 PLLCLK 가 된다. 그 후 PLLMUL에서 CLOCK 배분을 하고, 최종적으로 SW MUX에서 HSE,HSI,PLLCLK 중 하나를 선택하게 된다. 이 값이 SYSCLK 시스템 클럭이 된다. MCO MUX 에서 SYSCLK를 선택하고, MCO를 PROBE하여 오실로스코프로 확인하면 시스템 클럭을 관찰할 수 있다.
 
 ### RS-232C
 &nbsp;&nbsp;이번 실험에서 추가적으로 사용할 보드 포트인 RS-232C 포트는 양방향 통신이 가능하고, TX,RX쌍이 있다. 즉, 한방향으로 송신, 수신이 모두 가능하다. 직렬 통신이라고도 하며, 신호 저항성이 매우 높다. 비동기 통신이므로 통신속도가 기기간에 다르게 설정되어 있으면 통신이 불가능하다.그래서 이번 실험에서는 BAUD RATE를 조절하여 통신속도를 일치시키는 방법을 배운다.
 
 ## 3. 실험 과정
 
-### Putty설정
-실험결과를 확인하기 위해서는 컴퓨터에 putty가 설치되어 있어야 하며, PC 장치 관리자에서 보드와 연결된 Serial Port 확인하고 baud rate는 
-이번 실험에서 28800으로 사용한다.
+### Putty 설정
+실험결과를 확인하기 위해서는 컴퓨터에 putty가 설치되어 있어야 하며, PC 장치 관리자에서 보드와 연결된 Serial Port 확인하고 baud rate는 이번 실험에서 28800으로 사용한다.
 
 ### 사용한 레지스터 설명
 
 #### control register 1(USART_CR1)
 
-&nbsp;&nbsp;control register 1에서 M은 word length이고, PCE, PS는 오류 검출을 위한 parity bit를 enable, select 하는 역할을 한다. 이번 실험에서는 parity control disabled이므로 사용되지 않았다. TE, RE는 각각 transmitter enable, receiver enable이며, 0은 disable, 1은 enable을 가리킨다.
+&nbsp;&nbsp;control register 1에서 M은 word length이고, PCE, PS는 오류 검출을 위한 parity bit를 enable, select 하는 역할을 한다. 이번 실험에서는 parity control disabled 이므로 사용되지 않았다. TE, RE는 각각 transmitter enable, receiver enable이며, 0은 disable, 1은 enable을 가리킨다.
+
+![usart_cr1](https://user-images.githubusercontent.com/80534651/140392035-2194052d-c903-4333-8f74-e5aaca10626f.PNG)
 
 #### control register 2(USART_CR2)
 
-&nbsp;&nbsp;Control register 2의 clken는 clock enable이고, cpol은 clock polarity, cpha는 clock phase이다. Cr2는 stop bit를 초기화하며, clock사용 설정에 이용된다.
+&nbsp;&nbsp;Control register 2의 CLKEN는 clock enable이고, CPOL은 clock polarity, CPHA는 clock phase이다. CR2는 stop bit를 초기화하며, clock 사용 설정에 이용된다.
+
+![usart_cr2](https://user-images.githubusercontent.com/80534651/140392200-2c1bdebf-d81a-40e8-829a-8bbbf251488f.PNG)
 
 #### control register 3(USART_CR3)
 
-&nbsp;&nbsp;Control register 3의 ctse는 cts enable을 뜻하며, RTSE는 RTS enable을 뜻한다. Cr1, cr2로 clock 세팅이 완료되면 초당 전송되는 baud rate를 조절할 때 이용되는 레지스터이다.
+&nbsp;&nbsp;Control register 3의 CTSE는 cts enable을 뜻하며, RTSE는 RTS enable을 뜻한다. CR1, CR2로 clock 세팅이 완료되면 초당 전송되는 baud rate를 조절할 때 이용되는 레지스터이다.
+
+![cr3](https://user-images.githubusercontent.com/80534651/140392461-cfa7b1e0-7266-432e-a797-c66f280be4d0.PNG)
 
 #### Baud rate register(USART_BRR)
 
-&nbsp;&nbsp;Baud rate와 PCLK2 값을 이용하여 계산된 USARTDIV을 정수, 실수 부분으로 나눈 다음, DIV_Mantissa, DIV_Fraction에 각각 16진수로
-변환하여 적용한 값을 전송하는데 필요한 레지스터로, data register인 ustar_dr을 적용하여 msb 12bit 에 정수부, lsb 12bit에 소수부의 값을 적용하여 전송하는 역할을 한다.
+&nbsp;&nbsp;Baud rate와 PCLK2 값을 이용하여 계산된 USARTDIV을 정수, 실수 부분으로 나눈 다음, DIV_Mantissa, DIV_Fraction에 각각 16진수로 변환하여 적용한 값을 전송하는데 필요한 레지스터로, data register인 ustar_dr을 적용하여 msb 12bit 에 정수부, lsb 12bit에 소수부의 값을 적용하여 전송하는 역할을 한다.
+
+![brr](https://user-images.githubusercontent.com/80534651/140392624-fc4bab16-95d9-466e-8cba-c491fe013c48.PNG)
 
 ## 4. 코드 설명
 
 ### TODO-1 : SYSCLK를 52MHZ로 설정
-<img src="https://s3.us-west-2.amazonaws.com/secure.notion-static.com/13396cc3-caf5-484c-a5d0-9853375a3dc4/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAT73L2G45O3KS52Y5%2F20211011%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211011T132016Z&X-Amz-Expires=86400&X-Amz-Signature=0fc51d109a04630cff2b3b2b304c0f3988d944840865af74344a76fbb7d0dfda&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22" width="300">
+<img src="https://user-images.githubusercontent.com/80534651/140393151-889610b6-0e44-4327-a539-0e9a1dd5422d.png" width="500">
 &nbsp;&nbsp;HSE OSC에서 생성한 25MHz 클럭을 52MHz로 바꾸기 위해선 아래와 같은 과정을 거치면 된다.   
 
 ```
 1. PREDIV2에서 /5 (RCC_CFGR2 레지스터)
 2. PLL2MUL에서 *13 (RCC_CFGR2 레지스터)
-3. PREDIV1SRC 에서 PPL2 클락 선택 (RCC_CFGR2레지스터)
+3. PREDIV1SRC 에서 PLL2 클락 선택 (RCC_CFGR2레지스터)
 4. PREDIV1에서 /5 (RCC_CFGR2 레지스터) 
 5. PLLSRC에서 PREDIV1으로 부터 나온 클락 선택 (RCC_CFGR)
 6. PLLMUL에서 *4 (RCC_CFGR 레지스터)
@@ -94,13 +105,13 @@ RCC->CFGR2 |= (uint32_t)(RCC_CFGR2_PREDIV2_DIV5 | RCC_CFGR2_PLL2MUL13 | RCC_CFGR
 ### TODO-2 : MCO 포트를 시스템 클럭 출력으로 설정
 ``` C
 //@TODO - 2 Set the MCO port for system clock output
-RCC->CFGR &= ~(uint32_t)RCC_CFGR_MCO;
-RCC->CFGR |= (uint32_t)RCC_CFGR_MCO_SYSCLK;
+RCC->CFGR &= ~(uint32_t)RCC_CFGR_MCO;       //리셋
+RCC->CFGR |= (uint32_t)RCC_CFGR_MCO_SYSCLK; //System Clock 선택
 //@End of TODO - 2
 ```
 &nbsp;&nbsp;RCC_CFGR 레지스터의 MCO 에 0100 값을 주어 시스템 클락(SYSCLK)을 선택한다. 선택된 시스템 클럭은 오실로스코프로 확인이 가능하다. 
 
-  
+
 ### TODO-3 : RCC 설정
 
 ```C
@@ -144,7 +155,7 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   GPIOD->CRH |= (uint32_t)(GPIO_CRH_CNF11_1);
   }
   ```
-  
+
 &nbsp;&nbsp;이번 실험에서는 MCO 및 UART 사용을 위한 PORT/PIN 의GPIO 설정을 위해 PA8, PA9, PA10을 사용해야 한다. 따라서 GPIOA->CRH를 0000으로 초기화를 한다. MCO핀은 PA8이 관여를 하고 이를 Alternate function output Push-pull이 되도록 설정했다. USART TX는 PA9핀이고 Alternate function output Push-pull, USART RX는 PA10핀이고 Input with pull-up / pull-down으로 초기화가 필요한데, 이를 위에서 USART Pin Configuration부분에서 처리하였다.
 &nbsp;&nbsp;Putty에 신호를 보내기 위해서 S1 버튼을 누르는데 GPIO D포트의 11번 핀을 사용한다. 우리가 지금까지 해왔듯, 코드를 0000으로 초기화하고 CNF를 1000으로 설정함으로써 입력값을 전달할 수 있도록 하였다.
 
@@ -158,7 +169,7 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   /* Set the M bits according to USART_WordLength value */
   //@TODO - 6: WordLength : 8bit
   ```
-  
+
 &nbsp;&nbsp;USART_CR1 레퍼런스를 참고하면, WORDLENGTH에 관한 비트 M의 비트값 설정을 보면 비트값이 0일 때, WORD_LENGTH가 8BIT임을 알 수 있다. USARTINIT()함수의 초기화부분(맨 첫줄)에서 USART_CR1_M을 이용하여 비트를 0으로 초기화 하였으므로, 따로 코드를 추가하지는 않았다.
 
 ### TODO-7 : parity:none(disable)
@@ -167,7 +178,7 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   /* Set PCE and PS bits according to USART_Parity value */
   //@TODO - 7: Parity : None
   ```
-  
+
 &nbsp;&nbsp;USART_CR1의 레퍼런스를 확인해 보면 비트값이 0일 때, PARITY기능을 disable한다고 나와 있다. uartinit()함수 초기화 부분에서 usart_cr1_pce를 이용한 초기화를 진행하였으므로, 따로 코드를 추가하지는 않았다.
 
 ### TODO-8 : enable tx and rx
@@ -176,7 +187,7 @@ RCC->APB2ENR |= (uint32_t)(RCC_APB2ENR_IOPDEN);
   //@TODO - 8: Enable Tx and Rx
   USART1->CR1 |= USART_CR1_TE | USART_CR1_RE;
   ```
-  
+
 &nbsp;&nbsp;레퍼런스 27.6.4를 참고하여 연산을 진행하였다. 
 USART1->CR1 |= (uint32_t)(USART_CR1_TE|USART_CR1_RE);
 2번 비트와 3번 비트에 1을 OR연산으로 입력하여 활성화
@@ -192,7 +203,7 @@ USART1->CR1 |= (uint32_t)(USART_CR1_TE|USART_CR1_RE);
   /* Set STOP[13:12] bits according to USART_StopBits value */
   //@TODO - 9: Stop bit : 1bit
   ```
-  
+
 &nbsp;&nbsp;USART1->CR2 &= (uint32_t) ~(USART_CR2_STOP);
  코드로 이미 stop bit를 초기화 한 상태이다. 레퍼런스 27.6.5를 보면, usart_cr2가 나오는데, stop bit가 1이기 위해서는 비트의 값이 0이어야 한다. USART_CR2 레퍼런스를 확인해보면, 비트 값이 00이어야 하며, 이는 초기화 해놓은 상태와 같은 상태이기 때문에 추가적인 코드작성이 필요하지 않다.
 
@@ -207,7 +218,7 @@ USART1->CR1 |= (uint32_t)(USART_CR1_TE|USART_CR1_RE);
   //@TODO - 10: CTS, RTS : disable
   ```
 &nbsp;&nbsp; USART_CR3_CTSE, USART_CR3_RTSE를 이용하여,레지스터를 초기화 해놓았음
-  
+
 ### TODO-11 : Calculate & configure BRR
 
   ``` C
