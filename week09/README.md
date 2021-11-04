@@ -18,12 +18,12 @@
 &nbsp;&nbsp; 이번 실험에서 사용할 프로파일은 SPP(Serial Port Profile)이다. 이는 시리얼 통신을 이용하여 데이터를 송수신하는 프로파일로 SPP 사용 시에 두 장치는 RX, TX가 유선으로 연결된 것처럼 동작하게 된다. 
 
 ### Identifier
-고유 식별자로 SSID와 UUID가 있다.
-#### SSID (Service Set Identifier)
-&nbsp;&nbsp; SSID는 무선랜을 통해 클라이언트가 접속할 때 각 무선랜을 구별하기 위한 32 바이트 길이의 고유 식별자이고, 와이파이의 경우에는 각 와이파이 네트워크를 구별하기 위해 사용된다.  
+&nbsp;&nbsp; 고유 식별자로 SSID와 UUID가 있다.
+- SSID (Service Set Identifier)   
+SSID는 무선랜을 통해 클라이언트가 접속할 때 각 무선랜을 구별하기 위한 32 바이트 길이의 고유 식별자이고, 와이파이의 경우에는 각 와이파이 네트워크를 구별하기 위해 사용된다.  
 
-#### UUID (Universally Unique Identifier)
-&nbsp;&nbsp; UUID는 네트워크 상에서 서로 다른 개체들을 구별하기 위한 128비트 고유 식별자로 블루투스에서는 서비스의 종류를 구분하기 위해 사용된다. 
+- UUID (Universally Unique Identifier)   
+UUID는 네트워크 상에서 서로 다른 개체들을 구별하기 위한 128비트 고유 식별자로 블루투스에서는 서비스의 종류를 구분하기 위해 사용된다. 
 
 ### Bluetooth module (FB755AC)
 <img src = "https://user-images.githubusercontent.com/80534651/140200462-bdc9fbcf-f8c6-4973-85fd-31e17450f223.png" width = "500px">
@@ -49,15 +49,25 @@
 &nbsp;&nbsp; 이번 주 실험은 블루투스 모듈을 사용하여 폰과 보드 그리고, 컴퓨터의 통신을 진행하는 것이다. 세부 실험 내용은 다음과 같다.
 #### 3-1) 만능 기판 납땜
 보드와 블루투스 모듈을 연결하는 회로를 구성하여 납땜한다. 납땜 과정은 다음과 같다.
+```
 1. 보드를 기판에 장착하기 위한 보드 장착부를 납땜한다.
 2. 블루투스 모듈의 VCC, GND를 만능 기판의 3V3, GND와 연결한다.
 3. 블루투스 모듈의 RX, TX를 보드의 PA2, PA3과 연결한다.
 4. 블루투스 모듈의 CONFIG SELECT은 나중에 점프선으로 3V3을 입력해주기 위해 헤더핀과 연결한다.
 5. 블루투스 모듈의 STATUS핀과 CONNECT CHECK핀은 연결 상태를 확인하기 위해 LED와 연결한다.
+```
+납땜 시 다음과 같은 사항을 주의하며 진행했다.
+- 선이 다른 물체에 걸려 끊어지는 것을 방지하기 위해서 전선을 최대한 당겨서 납땜한다
+- 블루투스 모듈이 망가질 수 있으므로 모듈을 핀 소켓에 끼운 채로 납땜하지 않는다.
+- 한 선을 연결할 때 마다 멀티미터를 사용하여 연결한 선이 정상적으로 신호가 통하는지 확인한다.
+- 만능 기판의 공간을 확보하기 위해 전선을 대각선이 아닌 수직으로 배치하여야 한다.
+- 인두기의 끝이 더러워지면 납이 잘 녹지 않기 때문에 인두 팁 크리너를 틈틈히 사용하여 팁을 깨끗히 유지한다.
+- 인두기 사용 중 자리를 비울 때는 반드시 전원을 해제한다.
 
 | <img src="https://user-images.githubusercontent.com/80534651/140210403-515fc158-1446-4e04-a202-1aa13b0db604.jpg" width="500px"> | <img src="https://user-images.githubusercontent.com/80534651/140210462-8aac1ab9-56d5-4720-9a5e-e56472f390cb.jpg" width="500px"> | 
 |:--:|:--:| 
 | 기판 앞면 | 기판 뒷면 |
+
 
 #### 3-2) PC의 putty 프로그램과 Bluetooth 모듈 간 통신이 가능하도록 펌웨어 작성
 이번 실험에서는 블루투스 통신을 위하여, 지난 주 코드에서 Usart2 부분을
@@ -68,7 +78,18 @@
 인터럽트 발생시 작동하는 내용을 작성하였고, 데이터가 입력시 보드를 통해
 usart1으로 전송하도록 하였다.
 
-![캡처](https://user-images.githubusercontent.com/71700530/140271389-25c37b6d-10b8-4b8d-b286-32cb9c40df82.PNG)
+``` C
+void USART2_IRQHandler() {
+	uint16_t word;
+    if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET){
+    	// the most recent received data by the USART1 peripheral
+        word = USART_ReceiveData(USART2);
+        USART_SendData(USART1, word);
+        // clear 'Read data register not empty' flag
+    	USART_ClearITPendingBit(USART2,USART_IT_RXNE);
+    }
+}
+```
 
 #### 3-3) 블루투스 모듈 설정
 블루투스 모듈의 CONFIG SELECT 핀에 3.3v를 준 상태에서 보드를 키면 putty에 블루투스 모듈 설정 메뉴가 뜬다.
@@ -82,10 +103,9 @@ usart1으로 전송하도록 하였다.
 #### 3-4) Serial Bluetooth Terminal 어플리케이션을 이용하여 PC의 putty와 통신
 putty에 입력한 것이 bluetooth 모듈을 통해 스마트폰의 터미널에 출력되는 것과, 스마트폰의 터미널에 입력한 것이 putty에 출력되는 것을 확인한다.
 
-<img src = "https://user-images.githubusercontent.com/80534651/140271496-2e0383a1-03e4-4eb1-bda1-5876b52690e3.jpg" width = "300px">
+<img src = "https://user-images.githubusercontent.com/80534651/140271496-2e0383a1-03e4-4eb1-bda1-5876b52690e3.jpg" width = "500px">
 
 
 ## 4. 실험 결론
-&nbsp;&nbsp; 금주 실험에서는 전주 실험에서 사용된 코드에서 블루투스 통신을 위한 usart2 부분을 추가로 작성하였고, 납땜을 통한 보드 모듈 사용이 주를 이루었다. 대부분 조원들이 납땜경험이 적거나, 없었기 때문에 간단한 작업임에도 생각보다 시간이 소비되었다. 실험내용 대로 납땜을 완료한 후 블루투스 모듈을 통한 PC와 스마트폰간의 통신을 이루어냈다.   
-&nbsp;&nbsp; 향후, 프로젝트에서 블루투스 통신이 필수적인 만큼 금주 실험 내용을 잘 기억해놓을 필요성이 있을 것 같다.
+&nbsp;&nbsp; 금주 실험에서는 전주 실험에서 사용된 코드에서 블루투스 통신을 위한 usart2 부분을 추가로 작성하였고, 납땜을 통한 보드 모듈 사용이 주를 이루었다. 대부분 조원들이 납땜경험이 적거나, 없었기 때문에 간단한 작업임에도 시간이 꽤 소비되었다. 특히 선을 최대한 팽팽히 당겨서 납땜하는 것이 생각보다 쉽지 않았다. 실험내용 대로 납땜을 완료한 후 블루투스 모듈을 통한 PC와 스마트폰간의 통신을 이루어냈다. 향후, 프로젝트에서 블루투스 통신이 필수적인 만큼 금주 실험 내용을 잘 기억해놓을 필요성이 있을 것 같다.
 
