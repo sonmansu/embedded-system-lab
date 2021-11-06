@@ -17,19 +17,31 @@ uint16_t DeviceCode;
 static void LCD_WR_REG(uint16_t LCD_Reg)
 {
 	// TODO implement using GPIO_ResetBits/GPIO_SetBits
-	
+	GPIO_ResetBits(GPIOD, GPIO_Pin_13); // DC
+	GPIO_ResetBits(GPIOC, GPIO_Pin_6); //CS
+	GPIO_ResetBits(GPIOD, GPIO_Pin_14); //WR
+	// TODO end
+
 	GPIO_Write(GPIOE, LCD_Reg);
 	// TODO implement using GPIO_ResetBits/GPIO_SetBits
-	
+	GPIO_SetBits(GPIOC, GPIO_Pin_6); //CS
+	GPIO_SetBits(GPIOD, GPIO_Pin_14); //WR
+	// TODO end
 }
 
 static void LCD_WR_DATA(uint16_t LCD_Data)
 {
 	// TODO implement using GPIO_ResetBits/GPIO_SetBits
-	
+	GPIO_SetBits(GPIOD, GPIO_Pin_13); // LCD_RS(1);
+   	GPIO_ResetBits(GPIOC, GPIO_Pin_6); // LCD_CS(0);
+	GPIO_ResetBits(GPIOD, GPIO_Pin_14); // LCD_WR(0);
+	// TODO end
+
 	GPIO_Write(GPIOE, LCD_Data);
 	// TODO implement using GPIO_ResetBits/GPIO_SetBits
-	
+	GPIO_SetBits(GPIOC, GPIO_Pin_6); // LCD_CS(1);
+	GPIO_SetBits(GPIOD, GPIO_Pin_14); // LCD_WR(1);
+	// TODO end
 }
 
 static uint16_t LCD_ReadReg(uint16_t LCD_Reg)
@@ -288,7 +300,7 @@ void LCD_WindowMax(unsigned int x, unsigned int y, unsigned int x_end,
         LCD_WriteReg(0x51, x_end);
         LCD_WriteReg(0x52, y);
         LCD_WriteReg(0x53, y_end);
-        
+
         LCD_SetCursor(x, y);
 }
 
