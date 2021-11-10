@@ -49,16 +49,16 @@ ADC 는 온도, 습도, 조도 등의 analog 물리량을 digital신호로 변�
 ![image](https://user-images.githubusercontent.com/71700530/140936711-b23efb07-5fb0-4a43-ad56-632190417090.png)
 
 ## 3. 실험 과정
-- lcd.c
+- lcd.c   
   ![image](https://user-images.githubusercontent.com/71700530/140936796-7d47e4af-72c6-4bd4-b635-df2a92822158.png)
-  LCD_CS, LCS_RS, LCD_WR을 Low 상태로 둔 뒤, 전송. 그리고 WR과 CS를 High로 둔다 
+  LCD_CS, LCS_RS, LCD_WR을 Low 상태로 둔 뒤, 전송. 그리고 WR과 CS를 High로 둔다    
 
   
 
   ![image](https://user-images.githubusercontent.com/71700530/140936868-395e8ef3-2b23-4b7b-aa2b-6a41a1166591.png)
   LCD_CS, LCD_WR을 Low 상태로 LCD_RS를 High로 둔 뒤, 전송. 그리고 WR과 CS를 High로 둔다 
 
-- main.c
+- main.c   
   먼저 rcc_configure함수로 rcc관련 설정을 한다. 사용할 핀을 인가하고 이전 실험과 마찬가지로 GPIO, NVIC에 대한 설정을 해준다. ADC 값을 읽기 위해서는 인터럽트를 이용하기 때문에 별도의 핸들러 함수를 작성해준다,
 
 ![image](https://user-images.githubusercontent.com/71700530/140936919-b8c0878e-622d-4663-8025-832ad9c61a5f.png)
