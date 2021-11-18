@@ -262,7 +262,8 @@ int main(void)
 
 2. 버튼을 클릭하면 ON으로 출력이 바뀌고 LED toggle이 시작되는것을 알 수 있다. 또한, 서보모터도 90도에서 -90도로 이동한것을 확인 할 수 있다.
 
-   <img src="https://user-images.githubusercontent.com/64721658/142150649-12450c5a-dee7-4495-9d0f-a3ca5befd6a0.jpg" width = "600px">
+
+<img src="https://user-images.githubusercontent.com/64721658/142150649-12450c5a-dee7-4495-9d0f-a3ca5befd6a0.jpg" width = "600px">
 
 
 
