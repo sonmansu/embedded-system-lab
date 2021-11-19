@@ -198,15 +198,18 @@ void USART1_IRQHandler() {
     USART_ClearITPendingBit(USART1,USART_IT_RXNE);
   }
 }
-//char str[] = "TEAM07\r\n";
+char str[] = "TEAM07\r\n";
 
 void EXTI15_10_IRQHandler(void) { // when the button is pressed
   if (EXTI_GetITStatus(EXTI_Line11) != RESET) {
     if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {
       // TODO implement
       /* send UART 1 */
-      myFlag = 3;
-
+      char *tmp = &str[0];
+      while (*tmp != '\0') {
+        sendDataUART1(*tmp);
+        tmp++;
+      }
     }
     EXTI_ClearITPendingBit(EXTI_Line11);
   }
@@ -249,9 +252,6 @@ void sendDataUART1(uint16_t data) {
 
 int main(void)
 {
-  char str[] = "TEAM07\r\n";
-  int size = sizeof(str)/sizeof(char);
-
   SystemInit();
   RCC_Configure();
   GPIO_Configure();
@@ -263,32 +263,18 @@ int main(void)
   int led_idx = 0;
 
   while (1) {
-    led_idx = (led_idx+4) % 4; //+4를 해줘야 음수가 안나옴
     // TODO: implement
+    led_idx = (led_idx+4) % 4; //+4를 해줘야 음수가 안나옴
+
+    for (int i = 0; i < 4; i ++) {
+      if (i == led_idx)  GPIO_SetBits(GPIOD, LED_arr[i]);
+      else                  GPIO_ResetBits(GPIOD, LED_arr[i]);
+    }
+
     if (myFlag == 1) { //A동작
-      for (int i = 0; i < 4; i ++) {
-        if (i == led_idx)
-          GPIO_SetBits(GPIOD, LED_arr[i]);
-        else
-          GPIO_ResetBits(GPIOD, LED_arr[i]);
-
-      }
       led_idx++;
-
     } else if (myFlag == 2) { //B동작
-      for (int i = 0; i < 4; i ++) {
-        if (i == led_idx)
-          GPIO_SetBits(GPIOD, LED_arr[i]);
-        else
-          GPIO_ResetBits(GPIOD, LED_arr[i]);
-
-      }
       led_idx--;
-
-    } else if (myFlag == 3) {// 데이터 전송
-      for (int i = 0; i < size; i++) {
-        sendDataUART1(str[i]);
-      }
     }
 
     // Delay
