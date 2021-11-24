@@ -118,7 +118,7 @@ int main(void)
   LCD_Init();
   Touch_Configuration();
 //  Touch_Adjust();
-  int threshold = 700; //평소엔 1200~1500 / 플래시 비추면 200
+  int threshold = 700; 
 
   LCD_Clear(WHITE);
   int adc=0;
@@ -135,7 +135,7 @@ int main(void)
   return 0;
 }
 ```
-&nbsp;&nbsp;이번 실험은 평상시 TFT-LCD의 배경색이 WHITE, 조도센서에 스마트폰 플래시를 비출 때 TFT-LCD 배경색의 GRAY가 되도록 하는 것이 목표이다. 실험하는 조마다 threshold의 값이 다르겠지만, 7조의 경우에는 평소에는 1200~1500, 플래시를 비추었을 때 200의 조도센서 값이 나왔고, 그 사이의 값인 700을 threshold의 값으로 하였다.
+&nbsp;&nbsp;이번 실험은 평상시 TFT-LCD의 배경색이 WHITE, 조도센서에 스마트폰 플래시를 비출 때 TFT-LCD 배경색의 GRAY가 되도록 하는 것이 목표이다. 실험하는 조마다 threshold의 값이 다르겠지만 7조의 경우 평소에는 1300 ~ 1500, 플래시를 비추면 200 ~ 500정도의 조도센서 값이 나왔고, 중간정도의 값인 700을 threshold로 하였다.
 
 ## 4. 실험 사진
 | <img src = "https://user-images.githubusercontent.com/62247273/142719298-315b5ab9-1855-498f-87c0-da0cca1b152a.jpg" width = "500px"> | <img src = "https://user-images.githubusercontent.com/62247273/142719306-d35a7b12-9428-4275-9504-d1b819f34553.jpg" width = "500px"> |
