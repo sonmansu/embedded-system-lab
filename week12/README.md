@@ -22,7 +22,7 @@
 ### DMA Channel
 &nbsp;&nbsp;모듈은 DMA 컨트롤러의 DMA 채널을 통해 메모리 Read/Write를 할 수 있다. STM32 보드의 DMA 채널은 총12개(DMA1 채널 7개, DMA2 채널 5개)이다. 한 DMA의 여러 채널 사이 요청은 우선순위에 따르는데 4가지 단계로 구성이 되어 있다(very high, high, medium, low). 주변 기기-메모리, 메모리-주변기기, 주변기기-주변기기 간의 전송이 가능하다.
 
-| <img src = "https://user-images.githubusercontent.com/62247273/142719658-db49c6cb-d781-4f4b-9b2f-ac75a54be077.png" width = "300px"> | <img src = "https://user-images.githubusercontent.com/62247273/142719677-537cd11a-01af-4e9b-9003-25a81be4395b.png" width = "300px" > |
+| <img src = "https://user-images.githubusercontent.com/62247273/142719658-db49c6cb-d781-4f4b-9b2f-ac75a54be077.png" width = "450px"> | <img src = "https://user-images.githubusercontent.com/62247273/142719677-537cd11a-01af-4e9b-9003-25a81be4395b.png" width = "450px" > |
 |:---:|:---:|
 | DMA1 채널 | DMA2 채널 |
 
@@ -138,7 +138,7 @@ int main(void)
 &nbsp;&nbsp;이번 실험은 평상시 TFT-LCD의 배경색이 WHITE, 조도센서에 스마트폰 플래시를 비출 때 TFT-LCD 배경색의 GRAY가 되도록 하는 것이 목표이다. 실험하는 조마다 threshold의 값이 다르겠지만, 7조의 경우에는 평소에는 1200~1500, 플래시를 비추었을 때 200의 조도센서 값이 나왔고, 그 사이의 값인 700을 threshold의 값으로 하였다.
 
 ## 4. 실험 사진
-| <img src = "https://user-images.githubusercontent.com/62247273/142719298-315b5ab9-1855-498f-87c0-da0cca1b152a.jpg" width = "300px"> | <img src = "https://user-images.githubusercontent.com/62247273/142719306-d35a7b12-9428-4275-9504-d1b819f34553.jpg" width = "300px"> |
+| <img src = "https://user-images.githubusercontent.com/62247273/142719298-315b5ab9-1855-498f-87c0-da0cca1b152a.jpg" width = "500px"> | <img src = "https://user-images.githubusercontent.com/62247273/142719306-d35a7b12-9428-4275-9504-d1b819f34553.jpg" width = "500px"> |
 |:---:|:---:|
 | 플래시를 비추기 전 | 플래시를 비추고 난 후|
 
