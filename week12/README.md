@@ -3,20 +3,21 @@
 
 
 ## 1. 실험 목표
-1. DMA 이해 및 실습
+1. DMA 동작 방법의 이해
+1. DMA 구현
 
 ## 2. 배경 지식
 
 ### Direct Memory Access (DMA)
 
-&nbsp;&nbsp;DMA란 주변장치들이 메모리에 직접 접근하여 읽거나 쓸 수 있도록 하는 기능을 지원한다. CPU 의 개입 없이 I/O 장치와 기억장치 데이터를 전송할 수 있게 되어, CPU는 Interrupt와 달리 별도의 명령을 실행할 필요가 없다. 메모리 처리 Interrupt의 사이클만큼 성능이 향상된다.
+&nbsp;&nbsp;DMA란 주변장치들이 메모리에 직접 접근하여 읽거나 쓸 수 있도록 하는 기능이다. CPU 의 개입 없이 I/O 장치와 기억장치 데이터를 전송할 수 있게 되어, CPU는 Interrupt와 달리 별도의 명령을 실행할 필요가 없다. 메모리 처리 Interrupt의 사이클만큼 성능이 향상된다.
 
 
 | <img src = "https://user-images.githubusercontent.com/62247273/142562129-9a934f4c-8b0c-4610-8b1e-6688139ffe69.png" width = "300px"> | <img src = "https://user-images.githubusercontent.com/62247273/142562130-809a6792-6013-450f-be57-e18cbd7600c4.png" width = "300px"> |
 |:---:|:---:|
 | 일반적인 메모리 접근 방식 | DMA 방식 |
 
-&nbsp;&nbsp;첫 번째 그림은 DMA가 작동하지 않을 떄의 흐름을 나타낸 모식도이다. 모든 I/O로의 접근은 CPU를 통해서 수행된다. Data를 전달할 때마다 CPU가 관여한다. 반면, 두 번째 그림은 DMA 방식을 나타낸 것이다. RAM이 I/O 장치로부터 데이터가 필요하면, CPU는 DMA 컨트롤러에게 신호(전송 크기, 주소 등)을 보낸다. DMA 컨트롤러가 RAM 주소로 데이터를 bus를 통해 주고 받으며, 모든 데이터 전송이 종료되면, DMA 컨트롤러가 CPU에 인터럽트 신호를 보낸다.
+&nbsp;&nbsp;첫 번째 그림은 DMA가 작동하지 않을 떄의 흐름을 나타낸 모식도이다. 모든 I/O로의 접근은 CPU를 통해서 수행된다. Data를 전달할 때마다 CPU가 관여한다. 반면, 두 번째 그림은 DMA 방식을 나타낸 것이다. RAM이 I/O 장치로부터 데이터가 필요하면, CPU는 DMA 컨트롤러에게 신호(전송 크기, 주소 등)을 보낸다. DMA 컨트롤러가 RAM 주소로 데이터를 bus를 통해 주고 받으며, 모든 데이터 전송이 종료되면 DMA 컨트롤러가 CPU에 인터럽트 신호를 보낸다.
 
 ### DMA Channel
 &nbsp;&nbsp;모듈은 DMA 컨트롤러의 DMA 채널을 통해 메모리 Read/Write를 할 수 있다. STM32 보드의 DMA 채널은 총12개(DMA1 채널 7개, DMA2 채널 5개)이다. 한 DMA의 여러 채널 사이 요청은 우선순위에 따르는데 4가지 단계로 구성이 되어 있다(very high, high, medium, low). 주변 기기-메모리, 메모리-주변기기, 주변기기-주변기기 간의 전송이 가능하다.
@@ -50,7 +51,7 @@ void ADC_Configure(void) {
   ADC_Init(ADC1, &ADC_InitStructure);
   ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1,
                            ADC_SampleTime_239Cycles5);
-  ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE); // interrupt enable
+  ADC_DMACmd(ADC1, ENABLE); //dma enable
   ADC_Cmd(ADC1, ENABLE); // ADC1 enable
   ADC_ResetCalibration(ADC1);
 
