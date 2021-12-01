@@ -1,4 +1,4 @@
-//main.c
+//텀프 main.c
 #include "stm32f10x.h"
 #include "stm32f10x_exti.h"
 #include "stm32f10x_gpio.h"
@@ -12,10 +12,16 @@ void GPIO_Configure(void);
 void NVIC_Configure(void);
 void ADC_Configure(void);
 void Delay(void);
+
 /* 핀매핑
     자석: PE0
     RGB LED: PB12,13,14 (R,G,B순서대로 ), 공통단자: GND
 */
+
+//RGB LED 변수
+#define RED 0
+#define GREEN 1
+#define BLUE 2
 
 //---------------------------------------------------------------------------------------------------
 
@@ -115,20 +121,13 @@ unsigned led_array[3] = {
     GPIO_Pin_14
 };
 
-void turn_red(void) {
-    GPIO_SetBits(GPIOB, led_array[0]);
-    GPIO_ResetBits(GPIOB, led_array[1]);
-    GPIO_ResetBits(GPIOB, led_array[2]);
-}
-void turn_blue(void) {
-    GPIO_ResetBits(GPIOB, led_array[0]);
-    GPIO_ResetBits(GPIOB, led_array[1]);
-    GPIO_SetBits(GPIOB, led_array[2]);
-}
-void turn_green(void) {
-    GPIO_ResetBits(GPIOB, led_array[0]);
-    GPIO_SetBits(GPIOB, led_array[1]);
-    GPIO_ResetBits(GPIOB, led_array[2]);
+void turn_rgbled(int led_idx) {
+  for (int i = 0; i < 3; i++) {
+    if (i == led_idx)
+      GPIO_SetBits(GPIOB, led_array[i]); //애만 킴
+    else
+      GPIO_ResetBits(GPIOB, led_array[i]); //끔
+  }
 }
 void turn_off(void) {
     GPIO_ResetBits(GPIOB, led_array[0]);
@@ -146,9 +145,9 @@ int main(void) {
 
     while (1) {
         if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET) { //자석붙었을 때
-            turn_green();
+            turn_rgbled(GREEN);
         } else //안붙었을때
-            turn_red();
+            turn_rgbled(RED);
     }
     return 0;
 }
