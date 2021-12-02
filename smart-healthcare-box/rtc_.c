@@ -1,4 +1,5 @@
 // https://www.basic4mcu.com/bbs/board.php?bo_table=gesiyo4&wr_id=43&sca=STM32&page=2&device=pc
+// 노력하고 있습니다!
 include "stm32f10x_rtc.h"
 
 
