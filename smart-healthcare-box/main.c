@@ -1,10 +1,11 @@
-//ÅÒÇÁ main.c
+//í…€í”„ main.c
 #include "stm32f10x.h"
 #include "stm32f10x_exti.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_usart.h"
 #include "stm32f10x_rcc.h"
 #include "misc.h"
+#include "stm32f10x_tim.h"
 
 /* function prototype */
 void RCC_Configure(void);
@@ -14,13 +15,14 @@ void NVIC_Configure(void);
 void ADC_Configure(void);
 void Delay(void);
 
-/* ÇÉ¸ÅÇÎ
-  - ÀÚ¼®: PE0
-  - RGB LED: PB12,13,14 (R,G,B¼ø¼­´ë·Î ), °øÅë´ÜÀÚ: GND
-  - S1¹öÆ°: PD11 (³»ºÎÀûÀ¸·Î ¿¬°á)
+/* í•€ë§¤í•‘
+  - ìì„: PE0
+  - RGB LED: PB12,13,14 (R,G,Bìˆœì„œëŒ€ë¡œ ), ê³µí†µë‹¨ì: GND
+  - S1ë²„íŠ¼: PD11 (ë‚´ë¶€ì ìœ¼ë¡œ ì—°ê²°)
+  - ë¶€ì €(Piezo): PB0
 */
 
-//RGB LED º¯¼ö
+//RGB LED ë³€ìˆ˜
 #define RED 0
 #define GREEN 1
 #define BLUE 2
@@ -31,12 +33,12 @@ void RCC_Configure(void) {
 // TODO: Enable the APB2 peripheral clock using the function
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOB, ENABLE); // ADC1, port C RCC ENABLE
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE); // ÀÚ¼®
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE); // ìì„
 
     /* Alternate Function IO clock enable */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 
-    //ºí·çÅõ½º Åë½Å
+    //ë¸”ë£¨íˆ¬ìŠ¤ í†µì‹ 
     /* UART TX/RX port clock enable */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
@@ -46,19 +48,21 @@ void RCC_Configure(void) {
     /* USART2 clock enable */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 
-    // S1¹öÆ°
+    // S1ë²„íŠ¼
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+    //Piezo
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 }
 
 void GPIO_Configure(void) {
     GPIO_InitTypeDef GPIO_InitStructure;
-    //¸¶±×³×Æ½
+    //ë§ˆê·¸ë„¤í‹±
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD | GPIO_Mode_IPU;
     GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-    /* led 3°³; R,G,B ÇÉ ¼ø´ë·Î  */
+    /* led 3ê°œ; R,G,B í•€ ìˆœëŒ€ë¡œ  */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -74,7 +78,7 @@ void GPIO_Configure(void) {
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-    /* ºíÅõ Åë½Å */
+    /* ë¸”íˆ¬ í†µì‹  */
     /* UART1 pin setting */
     //TX
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
@@ -99,10 +103,29 @@ void GPIO_Configure(void) {
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; // *Floating*?
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // S1 ¹öÆ°
+    // S1 ë²„íŠ¼
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
+    
+    //PIEZO
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
+void Tim_Configure(void)
+{
+  TIM_TimeBaseInitTypeDef tim;
+  tim.TIM_Period = 10000;
+  tim.TIM_Prescaler = 7200;
+  tim.TIM_ClockDivision = TIM_CKD_DIV1;
+  tim.TIM_CounterMode = TIM_CounterMode_Up;
+  tim.TIM_RepetitionCounter = 0x0000;
+  //  PIEZO
+  TIM_TimeBaseInit(TIM1, &tim);
+  TIM_Cmd(TIM1, ENABLE);
+  TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
 }
 void USART1_Init(void){
     // USART 1
@@ -136,7 +159,7 @@ void USART1_Init(void){
     // TODO: Enable the USART2 RX interrupts using the function 'USART_ITConfig' and the argument value 'Receive Data register not empty interrupt'
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 }
-////ADC init ÇÔ¼ö
+////ADC init í•¨ìˆ˜
 //void ADC_Configure(void) {
 // ADC_InitTypeDef ADC_InitStructure;
 // // ADC1 Configuration
@@ -201,10 +224,10 @@ void USART2_IRQHandler() {
     	USART_ClearITPendingBit(USART2,USART_IT_RXNE);
     }
 }
-char msg_menu[] = "¸Ş´º¸¦ ÀÔ·Â ÇÏ¼¼¿ä\r \n- ¾à ¸ÔÀ» ½Ã°£ ¼³Á¤: 1\r\n- Å¸ÀÌ¸Ó ½Ã°£ ¼³Á¤: 2\r\n";
+char msg_menu[] = "ë©”ë‰´ë¥¼ ì…ë ¥ í•˜ì„¸ìš”\r \n- ì•½ ë¨¹ì„ ì‹œê°„ ì„¤ì •: 1\r\n- íƒ€ì´ë¨¸ ì‹œê°„ ì„¤ì •: 2\r\n";
 
 unsigned led_array[3] = {
-//R,G,B ¼ø¼­
+//R,G,B ìˆœì„œ
     GPIO_Pin_12,
     GPIO_Pin_13,
     GPIO_Pin_14
@@ -213,9 +236,22 @@ unsigned led_array[3] = {
 void turn_rgbled(int led_idx) {
   for (int i = 0; i < 3; i++) {
     if (i == led_idx)
-      GPIO_SetBits(GPIOB, led_array[i]); //¾Ö¸¸ Å´
+      GPIO_SetBits(GPIOB, led_array[i]); //ì• ë§Œ í‚´
     else
-      GPIO_ResetBits(GPIOB, led_array[i]); //²û
+      GPIO_ResetBits(GPIOB, led_array[i]); //ë”
+  }
+}
+void alert(){
+  //ì¼ì • ì‹œê°„ì´ ë˜ì—ˆì„ë•Œ piezo alert
+  while(1){
+    if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET){//ì•½í†µì´ ë‹«í˜€ìˆì„ë•Œ alert
+      GPIO_SetBits(GPIOB,GPIO_Pin_0);
+      Delay();
+      GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+      Delay();
+    }
+    else //ì•½í†µ ì—´ë©´ break
+      break;
   }
 }
 void Delay(void) {
@@ -229,12 +265,14 @@ int main(void) {
     USART1_Init();
 // ADC_Configure();
     NVIC_Configure();
-
-    while (1) {
-        if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET) { //ÀÚ¼®ºÙ¾úÀ» ¶§
-            turn_rgbled(GREEN);
-        } else //¾ÈºÙ¾úÀ»¶§
-            turn_rgbled(RED);
-    }
+    Tim_Configure();
+    
+//    while (1) {
+//        if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET) { //ìì„ë¶™ì—ˆì„ ë•Œ
+//            turn_rgbled(GREEN);
+//        } else //ì•ˆë¶™ì—ˆì„ë•Œ
+//            turn_rgbled(RED);
+//    }
+    alert();
     return 0;
 }
