@@ -121,3 +121,19 @@ void EXTI_Configuration(void)
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 }
+
+
+//기타 참고자료
+/*
+STM32 HAL: RTC
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=eziya76&logNo=221530955958
+
+STM32 내부 RTC + HAL library
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=eziya76&logNo=220986126032
+
+STM32I432 RTC alarm example : 우리는 stm32f10x
+https://github.com/CalebKang/stm32l432_rtc_alarm_example/blob/master/Core/Src/main.c
+
+stm32f103-RTC_alarm
+https://github.com/pioter77/stm32f103-RTC_alarm/blob/master/main.c
+*/
