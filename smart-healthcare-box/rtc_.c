@@ -28,7 +28,8 @@ void RTC_IRQHandler(void) {
 }
 
 void RTC_Configuration(void) {
-..... ..... ..... ..... ..... .....
+    /*
+    */
     RTC_ITConfig(RTC_IT_ALR,ENABLE); /* Enable the RTC Alarm */
     RTC_WaitForLastTask(); /* Wait until last write operation */
 }
