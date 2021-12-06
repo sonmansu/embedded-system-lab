@@ -1,7 +1,34 @@
+//timer version 5
+/*
+#include <stdio.h>
+#include <time.h>
+int main(void)
+{
+        clock_t start, end;
+	int flag = 0; //타이머가 작동되기 전
+        long i = 0;
+	long deadline = 30000000;
+        double pst;
+        start = clock();   //현재 시간
+        while (i < deadline)  //현재 시간에서 약을 먹기로 한 시간까지의 차
+        {
+               i++;
+        }
+        end = clock();	   //알람 시간에 도착
+        pst = (double)(end - start) / CLK_TCK; 
+	flag = 1;    //타이머 작동
+        printf("time:%f\n", pst);
+        return 0;
+}
+// https://jaimemin.tistory.com/36
+*/
+
 //timer version 4
+
+/*
 #include <time.h>
 #include <stdio.h>
-/*
+
     time_t rawTime;
     struct tm* pTimeInfo;
  
