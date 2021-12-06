@@ -1,16 +1,16 @@
 //timer version 3
-
+/*
 #include <stdio.h>
 #include <time.h>
 
 int main(void)
 {
 	int endTime = (unsigned)time(NULL); //끝나는 시간
-	endTime += 6;  //6초
+	endTime += 5;  //5초
 	
 	while(1){
-		int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 식나;
-		printf("%d second \n", endTime - startTime);
+		int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
+		//printf("%d second \n", endTime - startTime);
 		if(endTime - startTime == 0)
 		{
 			printf("end!\n");
@@ -18,6 +18,7 @@ int main(void)
 		}
 	}
 }
+*/
 
 /* Timer version 2
 //gcc 옵션으로 -lrt를 줄 것
