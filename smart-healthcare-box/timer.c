@@ -1,4 +1,5 @@
 //gcc 옵션으로 -lrt를 줄 것
+//gcc timer.c -o timer -lrt
 //리눅스에서 사용한 타이머 출처:https://sinwho.tistory.com/entry/%EB%A6%AC%EB%88%85%EC%8A%A4-C%EC%96%B8%EC%96%B4-%ED%83%80%EC%9D%B4%EB%A8%B8Timer-%EC%82%AC%EC%9A%A9%EB%B2%95-%EB%B0%8F-%EC%98%88%EC%A0%9C
 #include <unistd.h>
 #include <time.h>
@@ -56,11 +57,16 @@ int main()
     // 매개변수 1 : 타이머 변수
     // 매개변수 2 : second
     // 매개변수 3 : ms
-    createTimer(&timerID,5, 0);
+    int second = 0;
+    scanf("%d",&second);     //타이머를 몇 초로 할 건지를 블루통신을 통해 입력받거나 하면 될 것 같습니다.
+    createTimer(&timerID, second, 0);
     
     while(1)
     {
-     	if(flag == 1) break;   
+     	if(flag == 1) {      //타이머가 울린 여부를 flag 변수를 통해 알 수 있습니다.
+		flag = 0;
+		break;   
+	}
     }
     
 }
