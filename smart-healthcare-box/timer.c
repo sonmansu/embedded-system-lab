@@ -1,3 +1,25 @@
+//timer version 3
+
+#include <stdio.h>
+#include <time.h>
+
+int main(void)
+{
+	int endTime = (unsigned)time(NULL); //끝나는 시간
+	endTime += 6;  //6초
+	
+	while(1){
+		int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 식나;
+		printf("%d second \n", endTime - startTime);
+		if(endTime - startTime == 0)
+		{
+			printf("end!\n");
+			return 0;
+		}
+	}
+}
+
+/* Timer version 2
 //gcc 옵션으로 -lrt를 줄 것
 //gcc timer.c -o timer -lrt
 //리눅스에서 사용한 타이머 출처:https://sinwho.tistory.com/entry/%EB%A6%AC%EB%88%85%EC%8A%A4-C%EC%96%B8%EC%96%B4-%ED%83%80%EC%9D%B4%EB%A8%B8Timer-%EC%82%AC%EC%9A%A9%EB%B2%95-%EB%B0%8F-%EC%98%88%EC%A0%9C
@@ -22,7 +44,7 @@ int createTimer( timer_t *timerID, int sec, int msec )
     struct sigaction        sa;  
     int                     sigNo = SIGRTMIN;  
    
-    /* Set up signal handler. */  
+    // Set up signal handler. 
     sa.sa_flags = SA_SIGINFO;  
     sa.sa_sigaction = timer;     // 타이머 호출시 호출할 함수 
     sigemptyset(&sa.sa_mask);  
@@ -33,7 +55,7 @@ int createTimer( timer_t *timerID, int sec, int msec )
         return -1;  
     }  
    
-    /* Set and enable alarm */  
+    //Set and enable alarm 
     te.sigev_notify = SIGEV_SIGNAL;  
     te.sigev_signo = sigNo;  
     te.sigev_value.sival_ptr = timerID;  
@@ -70,8 +92,9 @@ int main()
     }
     
 }
-
-
+*/
+	
+//timer version 1
 //아래코드는 윈도우에서만 작동함.
 /*
 #include <stdio.h>
