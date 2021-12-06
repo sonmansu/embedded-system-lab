@@ -1,3 +1,34 @@
+//timer version 4
+#include <time.h>
+#include <stdio.h>
+/*
+    time_t rawTime;
+    struct tm* pTimeInfo;
+ 
+    rawTime = time(NULL);                // 현재 시간을 받음
+    pTimeInfo = localtime(&rawTime);    // 현재 시간을 struct tm에 넣음
+ 
+    printf("time_t : %lld\n", rawTime);
+ 
+    int year = pTimeInfo->tm_year + 1900;    //연도에는 1900 더해줌
+    int month = pTimeInfo->tm_mon + 1;    // 월에는 1 더해줌
+    int day = pTimeInfo->tm_mday;
+    int hour = pTimeInfo->tm_hour;
+    int min = pTimeInfo->tm_min;
+    int sec = pTimeInfo->tm_sec;
+    printf("timeInfo : %d년 %d월 %d일 %d시 %d분 %d초\n", year, month, day, hour, min, sec);
+    
+    time_t now;
+ struct tm * ts;
+ char buf [80];
+ 
+ now = time (NULL);
+ ts = localtime (& now);
+ strftime (buf, sizeof (buf), "% a% Y-% m-% d% H:% M:% S% Z", ts);
+    
+    //https://www.ibm.com/docs/ko/i/7.3?topic=functions-strftime-convert-datetime-string
+*/
+
 //timer version 3
 /*
 #include <stdio.h>
