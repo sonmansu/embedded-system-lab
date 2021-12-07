@@ -5,7 +5,6 @@
 #include "stm32f10x_usart.h"
 #include "stm32f10x_rcc.h"
 #include "misc.h"
-#include "stm32f10x_tim.h"
 
 /* function prototype */
 void RCC_Configure(void);
@@ -14,18 +13,31 @@ void USART1_Init(void);
 void NVIC_Configure(void);
 void ADC_Configure(void);
 void Delay(void);
+void turn_rgbled(int led_idx);
+void sendStringUsart(USART_TypeDef* USARTx, char* msg);
 
 /* 핀매핑
   - 자석: PE0
   - RGB LED: PB12,13,14 (R,G,B순서대로 ), 공통단자: GND
   - S1버튼: PD11 (내부적으로 연결)
-  - 부저(Piezo): PB0
 */
 
 //RGB LED 변수
 #define RED 0
 #define GREEN 1
 #define BLUE 2
+
+char msg_menu[] = "\r\n============MENU============\r\n"
+"1 => ALARM TIME\r\n"
+"2 => TIMER DURATION\r\n"
+"===========================\r\n"
+"Select: ";
+char msg_medicine_time[] = "It's time to take medicine. send '0' to finish the alarm\r\n";
+char msg_medicine_fail[] = "You didn't take any medicine.\r\n";
+//한글안됨..
+//"1 => 메뉴를 입력 하세요\r \n- 약 먹을 시간 설정: 1\r\n- 타이머 시간 설정: 2\r\n";
+//char msg_medicine_time[] = "약 복용 시간입니다. '0'을 전송하여 부저를 끌 수 있습니다.";
+//char msg_medicine_fail[] = "약을 복용하지 않으셨습니다.";
 
 //---------------------------------------------------------------------------------------------------
 
@@ -50,8 +62,9 @@ void RCC_Configure(void) {
 
     // S1버튼
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
-    //Piezo
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+     //임시 /* JoyStick Up/RIGHT/Down port clock enable */
+      RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 }
 
 void GPIO_Configure(void) {
@@ -107,26 +120,29 @@ void GPIO_Configure(void) {
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
-    
-    //PIEZO
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    //@임시    /* JoyStick up, down pin setting  UP(5), RIGHT(4) DOWN(2)*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5 | GPIO_Pin_4;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
-void Tim_Configure(void)
+void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 {
-  TIM_TimeBaseInitTypeDef tim;
-  tim.TIM_Period = 10000;
-  tim.TIM_Prescaler = 7200;
-  tim.TIM_ClockDivision = TIM_CKD_DIV1;
-  tim.TIM_CounterMode = TIM_CounterMode_Up;
-  tim.TIM_RepetitionCounter = 0x0000;
-  //  PIEZO
-  TIM_TimeBaseInit(TIM1, &tim);
-  TIM_Cmd(TIM1, ENABLE);
-  TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
+    EXTI_InitTypeDef EXTI_InitStructure;
+    // TODO: Select the GPIO pin (Joystick, button) used as EXTI Line using function 'GPIO_EXTILineConfig'
+    // TODO: Initialize the EXTI using the structure 'EXTI_InitTypeDef' and the function 'EXTI_Init'
+
+    /* Button */
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource11);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line11;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
+
+    // NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
+
 void USART1_Init(void){
     // USART 1
     USART_InitTypeDef USART1_InitStructure;
@@ -159,33 +175,12 @@ void USART1_Init(void){
     // TODO: Enable the USART2 RX interrupts using the function 'USART_ITConfig' and the argument value 'Receive Data register not empty interrupt'
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 }
-////ADC init 함수
-//void ADC_Configure(void) {
-// ADC_InitTypeDef ADC_InitStructure;
-// // ADC1 Configuration
-// ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
-// ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-// ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-// ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-// ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-// ADC_InitStructure.ADC_NbrOfChannel = 1;
-// ADC_Init(ADC1, &ADC_InitStructure);
-// ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1,
-// ADC_SampleTime_239Cycles5);
-// ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE); // interrupt enable
-// ADC_Cmd(ADC1, ENABLE); // ADC1 enable
-// ADC_ResetCalibration(ADC1);
-//
-// while(ADC_GetResetCalibrationStatus(ADC1));
-// ADC_StartCalibration(ADC1);
-// while(ADC_GetCalibrationStatus(ADC1));
-// ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-//}
+
 void NVIC_Configure(void) {
     NVIC_InitTypeDef NVIC_InitStructure;
 
     // TODO: fill the arg you want
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
     // TODO: Initialize the NVIC using the structure 'NVIC_InitTypeDef' and the function 'NVIC_Init'
     // UART1
@@ -203,28 +198,70 @@ void NVIC_Configure(void) {
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // TODO
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+
+    // User S1 Button
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; // TODO
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
 }
+
 void USART1_IRQHandler() {
     uint16_t word;
     if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
-    	// the most recent received data by the USART1 peripheral
+       // the most recent received data by the USART1 peripheral
         word = USART_ReceiveData(USART1);
         USART_SendData(USART2, word);
+
+//        //제한시간이 지나면
+//        sendStringUsart(USART2, msg_medicine_fail); //휴대폰으로 전송
+
         // clear 'Read data register not empty' flag
-    	USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+       USART_ClearITPendingBit(USART1,USART_IT_RXNE);
     }
 }
 void USART2_IRQHandler() {
     uint16_t word;
     if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET){
-    	// the most recent received data by the USART1 peripheral
+       // the most recent received data by the USART1 peripheral
         word = USART_ReceiveData(USART2);
-        USART_SendData(USART1, word);
+
+        if (word == '0') //약복용 완료됐다는 것, 보드의 부저를 꺼야함
+           turn_rgbled(RED);
+        else if (word == '1') //알람 시간 입력됨
+           turn_rgbled(BLUE);
+        else if (word == '2') //타이머 지속 시간   입력됨
+           turn_rgbled(GREEN);
+
+        USART_SendData(USART1, word); //푸티에 출력
         // clear 'Read data register not empty' flag
-    	USART_ClearITPendingBit(USART2,USART_IT_RXNE);
+       USART_ClearITPendingBit(USART2,USART_IT_RXNE);
     }
 }
-char msg_menu[] = "메뉴를 입력 하세요\r \n- 약 먹을 시간 설정: 1\r\n- 타이머 시간 설정: 2\r\n";
+/* char[] 타입의 문자열 출력
+매개변수 USART1: PUTTY로 출력
+             USART2: 휴대폰으로 출력 */
+
+void sendStringUsart(USART_TypeDef* USARTx, char* msg) {
+  char *tmp = &msg[0];
+  while (*tmp != '\0') {
+      USART_SendData(USARTx, (uint16_t)*tmp);
+       /* Wait till TC is set */
+      while ((USARTx->SR & USART_SR_TC) == 0);
+      tmp++;
+  }
+}
+
+void EXTI15_10_IRQHandler(void) { // s1버튼이 눌리면 메뉴 출력
+
+   if (EXTI_GetITStatus(EXTI_Line11) != RESET) {
+      if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {
+        sendStringUsart(USART2, msg_menu); //폰에 메뉴판 출력
+      }
+        EXTI_ClearITPendingBit(EXTI_Line11);
+   }
+}
 
 unsigned led_array[3] = {
 //R,G,B 순서
@@ -241,19 +278,6 @@ void turn_rgbled(int led_idx) {
       GPIO_ResetBits(GPIOB, led_array[i]); //끔
   }
 }
-void alert(){
-  //일정 시간이 되었을때 piezo alert
-  while(1){
-    if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET){//약통이 닫혀있을때 alert
-      GPIO_SetBits(GPIOB,GPIO_Pin_0);
-      Delay();
-      GPIO_ResetBits(GPIOB,GPIO_Pin_0);
-      Delay();
-    }
-    else //약통 열면 break
-      break;
-  }
-}
 void Delay(void) {
     int i;
     for (i = 0; i < 2000000; i++) {}
@@ -263,16 +287,20 @@ int main(void) {
     RCC_Configure();
     GPIO_Configure();
     USART1_Init();
+    EXTI_Configure();
 // ADC_Configure();
     NVIC_Configure();
-    Tim_Configure();
-    
-//    while (1) {
-//        if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET) { //자석붙었을 때
-//            turn_rgbled(GREEN);
-//        } else //안붙었을때
-//            turn_rgbled(RED);
-//    }
-    alert();
+
+    turn_rgbled(GREEN);
+
+    while (1) {
+
+        if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
+          sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
+        }
+
+         if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
+          sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
+    }
     return 0;
 }
