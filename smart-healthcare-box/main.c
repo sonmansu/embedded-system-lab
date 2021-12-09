@@ -13,19 +13,27 @@ void GPIO_Configure(void);
 void USART12_Init(void);
 void NVIC_Configure(void);
 void ADC_Configure(void);
-void Delay(void);
+void delay(void);
 void turn_rgbled(int led_idx);
 void sendStringUsart(USART_TypeDef* USARTx, char* msg);
 void buzzerOn(void);
 void buzzerOff(void);
-
+void TIM2_Configure(void) ;
+void TIM2_IRQHandler();
+int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO);
+void delayTime(uint32_t delayTime);
+void getDistance();
 /* 핀매핑
 - 자석: PE0
 - RGB LED: PB12,13,14 (R,G,B순서대로 ), 공통단자: GND
 - S1버튼: PD11 (내부적으로 연결)
 - 부저(Piezo): PB0
-*/
 
+[이진] [오후 7:57] TRIG PE2핀  vfㅍㄹ
+[이진] [오후 7:57] ECHO PE3핀 ㅊㄹ
+
+*/
+uint32_t usTime = 0;
 //RGB LED 변수
 #define RED 0
 #define GREEN 1
@@ -78,6 +86,8 @@ void RCC_Configure(void) {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
   //임시 /* JoyStick Up/RIGHT/Down port clock enable */
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+  //타이머 clock 인가 time clock enable
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 }
 
 void GPIO_Configure(void) {
@@ -143,7 +153,20 @@ void GPIO_Configure(void) {
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5 | GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
+  // 초음파 센서 6개
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_8 | GPIO_Pin_10 | GPIO_Pin_12; // TRIG
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; // 초음파 발사
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_5 | GPIO_Pin_7 | GPIO_Pin_9 | GPIO_Pin_11 | GPIO_Pin_13; // Echo
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; // input pull down 초음파 받기
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  
+  
 }
+
 void Tim_Configure(void)
 {
   TIM_TimeBaseInitTypeDef tim;
@@ -157,6 +180,7 @@ void Tim_Configure(void)
   TIM_Cmd(TIM1, ENABLE);
   TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
 }
+
 void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 {
   EXTI_InitTypeDef EXTI_InitStructure;
@@ -187,6 +211,16 @@ IF문 안은 == SET 으로해야지만 ;안'이 호출됨. 이게 정상작동 *
   EXTI_Init(&EXTI_InitStructure);
   // NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
+
+void TIM2_IRQHandler() {
+  if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+    //printf("%d",usTime);
+    usTime++; // 1us마다 Interrupt가 걸리도록 설정해두었으니 usTime을 측정하는 변수
+    
+  }
+  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+}
+
 void USART12_Init(void){
   // USART 1
   USART_InitTypeDef USART1_InitStructure;
@@ -272,7 +306,30 @@ void NVIC_Configure(void) {
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // TODO
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
+  
+    // TIMER2
+  NVIC_EnableIRQ(TIM2_IRQn);
+  NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00; // 우선순위가 가장 높다.
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
 }
+
+void TIM2_Configure(void) {
+  
+    // 짧은 시간 많은 감지가 필요하므로 1us를 만든다고 가정
+  TIM_TimeBaseInitTypeDef TIM_InitStructure;
+  TIM_InitStructure.TIM_Prescaler = 72;
+  TIM_InitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_InitStructure.TIM_Period = 1;
+  TIM_InitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+  TIM_TimeBaseInit(TIM2, &TIM_InitStructure);
+
+  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+  TIM_Cmd(TIM2, ENABLE);
+}
+
 void USART1_IRQHandler() {
   uint16_t word;
   if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
@@ -352,9 +409,9 @@ void alert(){
   while(1){
     if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET){//약통이 닫혀있을때 alert
       GPIO_SetBits(GPIOB,GPIO_Pin_0);
-      Delay();
+      delay();
       GPIO_ResetBits(GPIOB,GPIO_Pin_0);
-      Delay();
+      delay();
     }
     else //약통 열면 break
       break;
@@ -366,9 +423,9 @@ void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 
   while(flagBuzzer) { 
     printf("부저울림\n");
     GPIO_SetBits(GPIOB,GPIO_Pin_0);
-    Delay();
+    delay();
     GPIO_ResetBits(GPIOB,GPIO_Pin_0);
-    Delay();
+    delay();
   } 
   //0을 전송하거나 뚜껑 열리면 부저 꺼짐
   printf("부저끔\n"); 
@@ -376,10 +433,71 @@ void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 
   flagBuzzer = 1; // 부저 플래그 다시 복원 
 }
 
-void Delay(void) {
+void delayTime(uint32_t delayTime){
+  uint32_t prev_time = usTime;
+  while(1)
+  {
+    if(usTime - prev_time > delayTime) break;
+  }
+}
+
+void delay(void) {
   int i;
   for (i = 0; i < 2000000; i++) {}
 }
+//TIM을 1us로 맞추는 걸로 수정
+// E2, E3
+int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO){
+    uint32_t prev = 0;
+    GPIO_SetBits(GPIOE, GPIO_PIN_TRIG);
+    GPIO_ResetBits(GPIOE, GPIO_PIN_ECHO);
+    delayTime(10);
+    GPIO_ResetBits(GPIOE, GPIO_PIN_TRIG);
+    //uint8_t val = GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO);
+
+    /* 버스트 발생 직후 에코는 HIGH 레벨을 가진다.
+    따라서 버스트가 발생했는지 알기 위해 while문을 통해
+    에코가 LOW 레벨(RESET)을 가질 때(버스트 발생 X)는 반복문에 머물게 하고 
+    에코가 HIGH 레벨(SET)을 가질 때(버스트 발생)는 반복문을 탈출한다.*/  
+    while(GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO) == RESET);
+    
+    // 반복문을 탈출한 이후엔 시간 측정을 위해 prev 변수에 현재 시각을 저장한다.
+    prev = usTime; 
+    
+    /* 에코에 버스트가 다시 들어오면 에코는 LOW 레벨을 가진다.
+    따라서 에코가 HIGH 레벨(SET)일 동안은 아직 버스트가 돌아 오지 않은 거니까
+    반복문에 머물게 하고 에코가 LOW 레벨을 가졌을 땐 버스트가 들어왔다는
+    의미니까 반복문을 탈출해 거리를 계산한다.*/ 
+    while(GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO) != RESET);
+
+    // 거리는 (버스트 왕복거리) / 2 / 0.034cm/us 로 구해진다.
+    int distance = (usTime - prev)*34/1000;
+
+    return distance;
+
+}
+
+void getDistance(){
+   uint32_t v = readDistance(GPIO_Pin_2,GPIO_Pin_3);
+      if(v>=0 && v <= 4) {
+      turn_rgbled(GREEN);
+    printf("Sensor: %d\n",v);
+      delay();
+
+      }
+   else if(v> 4 && v <8){
+     turn_rgbled(BLUE); 
+  printf("Sensor: %d\n",v);
+   delay();
+      
+     }
+      else{
+   turn_rgbled(RED); 
+       printf("Sensor: %d\n",v);
+       delay();
+      }
+}
+
 int main(void) {
   SystemInit();
   RCC_Configure();
@@ -389,20 +507,23 @@ int main(void) {
   // ADC_Configure();
   NVIC_Configure();
   Tim_Configure();
+  TIM2_Configure();
   
-  turn_rgbled(GREEN);
   
-  while (1) {
-    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
-      //      alert();
-      sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
-      buzzerOn();     
-    }
-    
-    
-    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
-      sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
+//  while (1) {
+//    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
+//      //      alert();
+//      sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
+//      buzzerOn();     
+//    }
+//    
+//    
+//    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
+//      sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
+//  }
+  while(1){
+     getDistance;
+
   }
-  
   return 0;
 }
