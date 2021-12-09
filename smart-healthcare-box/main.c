@@ -522,7 +522,7 @@ int main(void) {
 //      sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
 //  }
   while(1){
-     getDistance;
+     getDistance();
 
   }
   return 0;
