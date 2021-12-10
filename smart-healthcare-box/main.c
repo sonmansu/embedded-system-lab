@@ -1,3 +1,4 @@
+//핀바꾸던거
 //텀프 main.c
 #include "stm32f10x.h"
 #include "stm32f10x_exti.h"
@@ -6,6 +7,9 @@
 #include "stm32f10x_rcc.h"
 #include "misc.h"
 #include "stm32f10x_tim.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* function prototype */
 void RCC_Configure(void);
@@ -14,7 +18,7 @@ void USART12_Init(void);
 void NVIC_Configure(void);
 void ADC_Configure(void);
 void delay(void);
-void turn_rgbled(int led_idx);
+void turnRgbLed(int led_idx);
 void sendStringUsart(USART_TypeDef* USARTx, char* msg);
 void buzzerOn(void);
 void buzzerOff(void);
@@ -23,26 +27,53 @@ void TIM2_IRQHandler();
 int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO);
 void delayTime(uint32_t delayTime);
 void getDistance();
+void buzzerTimer();
 /* 핀매핑
+원본 ===========
 - 자석: PE0
 - RGB LED: PB12,13,14 (R,G,B순서대로 ), 공통단자: GND
 - S1버튼: PD11 (내부적으로 연결)
 - 부저(Piezo): PB0
-
-[이진] [오후 7:57] TRIG PE2핀  vfㅍㄹ
-[이진] [오후 7:57] ECHO PE3핀 ㅊㄹ
-
+초음파 TRIG PE2핀 , ECHO PE3핀
+변경=============
+RGB PE 14,12,10
+초음파 PB 13, 15
+자석 PB12
 */
 uint32_t usTime = 0;
+
 //RGB LED 변수
+//define 수정
+#define PORT_RGB  GPIOE
 #define RED 0
 #define GREEN 1
 #define BLUE 2
+#define PIN_RED GPIO_Pin_14
+#define PIN_GREEN GPIO_Pin_12
+#define PIN_BLUE GPIO_Pin_10
+
+#define PORT_MAG GPIOB
+#define PIN_MAG  GPIO_Pin_12
+//EXTI 선언용
+#define PORT_SOURCE_MAG GPIO_PortSourceGPIOB
+#define PIN_SOURCE_MAG  GPIO_PinSource12
+#define EXTI_LINE_MAG   EXTI_Line12
+
+#define PORT_ULTRA GPIOB
+#define PIN_TRIG GPIO_Pin_15
+#define PIN_ECHO GPIO_Pin_13
+
+#define PORT_PIEZO GPIOB
+#define PIN_PIEZO  GPIO_Pin_0
+
+//define 수정
 
 int flagBuzzer = 1; //c에서는 boolean type이 없음
+int flagTimer = 0;
 
+//define 수정
 unsigned led_array[3] = {
-  GPIO_Pin_12,    GPIO_Pin_13,    GPIO_Pin_14 //R,G,B 순서
+  PIN_RED, PIN_GREEN, PIN_BLUE //R,G,B 순서
 };
 
 char msg_menu[] = "\r\n============MENU============\r\n"
@@ -65,7 +96,7 @@ void RCC_Configure(void) {
   // TODO: Enable the APB2 peripheral clock using the function
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOB, ENABLE); // ADC1, port C RCC ENABLE
   
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE); // 자석
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE); // RGB
   
   /* Alternate Function IO clock enable */
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -82,7 +113,7 @@ void RCC_Configure(void) {
   
   // S1버튼
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
-  //Piezo
+  //Piezo,Ultrasonic,Magnetic
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
   //임시 /* JoyStick Up/RIGHT/Down port clock enable */
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
@@ -92,26 +123,27 @@ void RCC_Configure(void) {
 
 void GPIO_Configure(void) {
   GPIO_InitTypeDef GPIO_InitStructure;
+  //define 수정
   //마그네틱
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+  GPIO_InitStructure.GPIO_Pin = PIN_MAG;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;// | GPIO_Mode_IPU;
-  GPIO_Init(GPIOE, &GPIO_InitStructure);
-  
+  GPIO_Init(PORT_MAG, &GPIO_InitStructure);
+  //define 수정
   /* led 3개; R,G,B 핀 순대로  */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+  GPIO_InitStructure.GPIO_Pin = PIN_RED;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(PORT_RGB, &GPIO_InitStructure);
   
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Pin = PIN_GREEN;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(PORT_RGB, &GPIO_InitStructure);
   
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+  GPIO_InitStructure.GPIO_Pin = PIN_BLUE;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(PORT_RGB, &GPIO_InitStructure);
   
   /* 블투 통신 */
   /* UART1 pin setting */
@@ -125,7 +157,6 @@ void GPIO_Configure(void) {
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; // *Floating*?
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-  
   /* USART2 */
   //TX
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
@@ -144,27 +175,26 @@ void GPIO_Configure(void) {
   GPIO_Init(GPIOD, &GPIO_InitStructure);
   
   //PIEZO
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+  GPIO_InitStructure.GPIO_Pin = PIN_PIEZO;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(PORT_PIEZO, &GPIO_InitStructure);
   
   //@임시    /* JoyStick up, down pin setting  UP(5), RIGHT(4) DOWN(2)*/
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_5 | GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU | GPIO_Mode_IPD;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
-  // 초음파 센서 6개
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_8 | GPIO_Pin_10 | GPIO_Pin_12; // TRIG
+  // 초음파 센서
+  //define 수정
+  GPIO_InitStructure.GPIO_Pin = PIN_TRIG; // TRIG
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; // 초음파 발사
-  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  GPIO_Init(PORT_ULTRA, &GPIO_InitStructure);
   
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_5 | GPIO_Pin_7 | GPIO_Pin_9 | GPIO_Pin_11 | GPIO_Pin_13; // Echo
+  GPIO_InitStructure.GPIO_Pin = PIN_ECHO; // Echo
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; // input pull down 초음파 받기
-  GPIO_Init(GPIOE, &GPIO_InitStructure);
-  
-  
+  GPIO_Init(PORT_ULTRA, &GPIO_InitStructure);
 }
 
 void Tim_Configure(void)
@@ -195,18 +225,16 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
   EXTI_InitStructure.EXTI_LineCmd = ENABLE;
   EXTI_Init(&EXTI_InitStructure);
   
-  /* 자석 E0 */
-  GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource0);
-  EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+  /* 자석 E0 -> b12 변경 */
+  GPIO_EXTILineConfig(PORT_SOURCE_MAG, PIN_SOURCE_MAG);
+  EXTI_InitStructure.EXTI_Line = EXTI_LINE_MAG;
   EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
 //  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising; /
   /* 이거하면 자석 붙였을때 뗄떼 , 둘다 IT문 안이 무조건 호출됨.. RESET으로 하나 SET으로 하나 마찬가지였음 그건 왜지
-  
 FALLING으로 하면 붙였을때 뗄데 둘다 '리셋됨'은 호출되는데
 IF문 안은 == SET 으로해야지만 ;안'이 호출됨. 이게 정상작동 */
       EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; 
       //이거하면 
-      
   EXTI_InitStructure.EXTI_LineCmd = ENABLE;
   EXTI_Init(&EXTI_InitStructure);
   // NOTE: do not select the UART GPIO pin used as EXTI Line here
@@ -300,8 +328,8 @@ void NVIC_Configure(void) {
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   
-  // 자석 BE0
-  NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+  // 자석 PE0 -> PB12 
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // TODO
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -348,13 +376,13 @@ void USART2_IRQHandler() {
     word = USART_ReceiveData(USART2);
     
     if (word == '0') {//약복용 완료됐다는 것, 보드의 부저를 꺼야함  
-      turn_rgbled(RED);
+      turnRgbLed(RED);
       flagBuzzer = 0; //부저끔
     }
     else if (word == '1') //알람 시간 입력됨 
-      turn_rgbled(BLUE);
+      turnRgbLed(BLUE);
     else if (word == '2') //타이머 지속 시간   입력됨
-      turn_rgbled(GREEN);
+      turnRgbLed(GREEN);
     
     USART_SendData(USART1, word); //푸티에 출력
     // clear 'Read data register not empty' flag
@@ -374,34 +402,44 @@ void sendStringUsart(USART_TypeDef* USARTx, char* msg) {
     tmp++;
   }
 }
-void EXTI15_10_IRQHandler(void) { 
+void EXTI15_10_IRQHandler(void) {
   if (EXTI_GetITStatus(EXTI_Line11) != RESET) { //// s1버튼이 눌리면 메뉴 출력
     if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_11) == Bit_RESET) {          
       sendStringUsart(USART2, msg_menu); //폰에 메뉴판 출력 
     }
     EXTI_ClearITPendingBit(EXTI_Line11);
   }
-}
-void EXTI0_IRQHandler(void) {
-  if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
-    printf("EXTI0_IRQHandler0 리셋됨\n"); //붙였다 뗄떼마다 호출됨
-    if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_RESET) {     //자석 B0가  리셋되면 (=뚜껑열리면)
-      printf("EXTI0_IRQHandler1 if문 안\n");
+  if (EXTI_GetITStatus(EXTI_LINE_MAG) != RESET) {  //자석 변화 감지
+    printf("EXTI_LINE_MAG 리셋됨\n"); //붙였다 뗄떼마다 호출됨
+    if (GPIO_ReadInputDataBit(PORT_MAG, PIN_MAG) == Bit_RESET) {     //자석이  리셋되면 (=뚜껑열리면)
+      sendStringUsart(USART2, msg_menu); //폰에 메뉴판 출력 
       flagBuzzer = 0; //부저끔
     }
-    printf("EXTI0_IRQHandler2 if문 밖\n");
-    EXTI_ClearITPendingBit(EXTI_Line0);
+    printf("EXTI_LINE_MAG if문 밖\n");
+    EXTI_ClearITPendingBit(EXTI_LINE_MAG);
   }
   printf("====================\n");
-  
 }
 
-void turn_rgbled(int led_idx) {
+//void EXTI0_IRQHandler(void) {
+//  if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+//    //define 수정
+//    if (GPIO_ReadInputDataBit(PORT_MAG_ULTRA, PIN_MAG) == Bit_RESET) {    
+//      printf("EXTI0_IRQHandler1 if문 안\n");
+//      flagBuzzer = 0; //부저끔
+//    }
+//    printf("EXTI0_IRQHandler2 if문 밖\n");
+//    EXTI_ClearITPendingBit(EXTI_Line0);
+//  }
+//  printf("====================\n");
+//  
+//}
+void turnRgbLed(int led_idx) {
   for (int i = 0; i < 3; i++) {
     if (i == led_idx)
-      GPIO_SetBits(GPIOB, led_array[i]); //애만 킴
+      GPIO_SetBits(PORT_RGB, led_array[i]); //애만 킴
     else
-      GPIO_ResetBits(GPIOB, led_array[i]); //끔
+      GPIO_ResetBits(PORT_RGB, led_array[i]); //끔
   }
 }
 void alert(){
@@ -417,6 +455,21 @@ void alert(){
       break;
   }
 }
+//void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
+//  printf("부저 플래그: %d\n", flagBuzzer);
+//  
+//  while(flagBuzzer) { 
+//    printf("부저울림\n");
+//    GPIO_SetBits(GPIOB,GPIO_Pin_0);
+//    delay();
+//    GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+//    delay();
+//  } 
+//  //0을 전송하거나 뚜껑 열리면 부저 꺼짐
+//  printf("부저끔\n"); 
+//  
+//  flagBuzzer = 1; // 부저 플래그 다시 복원 
+//}
 void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
   printf("부저 플래그: %d\n", flagBuzzer);
   
@@ -432,7 +485,6 @@ void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 
   
   flagBuzzer = 1; // 부저 플래그 다시 복원 
 }
-
 void delayTime(uint32_t delayTime){
   uint32_t prev_time = usTime;
   while(1)
@@ -449,17 +501,17 @@ void delay(void) {
 // E2, E3
 int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO){
     uint32_t prev = 0;
-    GPIO_SetBits(GPIOE, GPIO_PIN_TRIG);
-    GPIO_ResetBits(GPIOE, GPIO_PIN_ECHO);
+    GPIO_SetBits(PORT_ULTRA, GPIO_PIN_TRIG);
+    GPIO_ResetBits(PORT_ULTRA, GPIO_PIN_ECHO);
     delayTime(10);
-    GPIO_ResetBits(GPIOE, GPIO_PIN_TRIG);
+    GPIO_ResetBits(PORT_ULTRA, GPIO_PIN_TRIG);
     //uint8_t val = GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO);
 
     /* 버스트 발생 직후 에코는 HIGH 레벨을 가진다.
     따라서 버스트가 발생했는지 알기 위해 while문을 통해
     에코가 LOW 레벨(RESET)을 가질 때(버스트 발생 X)는 반복문에 머물게 하고 
     에코가 HIGH 레벨(SET)을 가질 때(버스트 발생)는 반복문을 탈출한다.*/  
-    while(GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO) == RESET);
+    while(GPIO_ReadInputDataBit(PORT_ULTRA, GPIO_PIN_ECHO) == RESET);
     
     // 반복문을 탈출한 이후엔 시간 측정을 위해 prev 변수에 현재 시각을 저장한다.
     prev = usTime; 
@@ -468,34 +520,61 @@ int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO){
     따라서 에코가 HIGH 레벨(SET)일 동안은 아직 버스트가 돌아 오지 않은 거니까
     반복문에 머물게 하고 에코가 LOW 레벨을 가졌을 땐 버스트가 들어왔다는
     의미니까 반복문을 탈출해 거리를 계산한다.*/ 
-    while(GPIO_ReadInputDataBit(GPIOE, GPIO_PIN_ECHO) != RESET);
+    while(GPIO_ReadInputDataBit(PORT_ULTRA, GPIO_PIN_ECHO) != RESET);
 
     // 거리는 (버스트 왕복거리) / 2 / 0.034cm/us 로 구해진다.
     int distance = (usTime - prev)*34/1000;
-
     return distance;
-
 }
 
 void getDistance(){
-   uint32_t v = readDistance(GPIO_Pin_2,GPIO_Pin_3);
-      if(v>=0 && v <= 4) {
-      turn_rgbled(GREEN);
+  uint32_t v = readDistance(PIN_TRIG,PIN_ECHO);
+  if(v>=0 && v <= 4) {
+    turnRgbLed(GREEN);
     printf("Sensor: %d\n",v);
-      delay();
+    delay();
+  }
+  else if(v> 4 && v <8){
+    turnRgbLed(BLUE); 
+    printf("Sensor: %d\n",v);
+    delay();
+  }
+  else{
+    turnRgbLed(RED); 
+    printf("Sensor: %d\n",v);
+    delay();
+  }
+}
 
+void buzzerTimer(){
+        int endTime = (unsigned)time(NULL); //끝나는 시간
+   endTime += 5;  //5초
+   
+   while(1){
+      int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
+      //printf("%d second \n", endTime - startTime);
+      if(endTime - startTime == 0)
+      {
+         printf("end!\n");
+                        flagTimer = 1;
+         return;
       }
-   else if(v> 4 && v <8){
-     turn_rgbled(BLUE); 
-  printf("Sensor: %d\n",v);
-   delay();
-      
-     }
-      else{
-   turn_rgbled(RED); 
-       printf("Sensor: %d\n",v);
-       delay();
+   }      
+}
+
+void buzzerTenSeconds(){
+        int endTime = (unsigned)time(NULL); //끝나는 시간
+   endTime += 5;  //5초
+   while(1){
+      int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
+      //printf("%d second \n", endTime - startTime);
+                if(endTime - startTime == 0)
+      {
+         printf("end!\n");
+  
+         return;
       }
+   }      
 }
 
 int main(void) {
@@ -508,22 +587,24 @@ int main(void) {
   NVIC_Configure();
   Tim_Configure();
   TIM2_Configure();
-  
-  
-//  while (1) {
-//    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
-//      //      alert();
-//      sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
-//      buzzerOn();     
-//    }
-//    
-//    
+  //buzzerTimer();
+  //buzzerTenSeconds();
+    
+  while (1) {
+    getDistance();
+    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
+      //      alert();
+      sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
+      buzzerOn();     
+    }
+    
 //    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
 //      sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
-//  }
-  while(1){
-     getDistance();
 
+    if(flagTimer == 1){
+        buzzerOn();
+        flagTimer=0;
+    }
   }
   return 0;
 }
