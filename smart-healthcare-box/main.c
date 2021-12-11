@@ -442,34 +442,7 @@ void turnRgbLed(int led_idx) {
       GPIO_ResetBits(PORT_RGB, led_array[i]); //끔
   }
 }
-void alert(){
-  //일정 시간이 되었을때 piezo alert
-  while(1){
-    if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0) == Bit_SET){//약통이 닫혀있을때 alert
-      GPIO_SetBits(GPIOB,GPIO_Pin_0);
-      delay();
-      GPIO_ResetBits(GPIOB,GPIO_Pin_0);
-      delay();
-    }
-    else //약통 열면 break
-      break;
-  }
-}
-//void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
-//  printf("부저 플래그: %d\n", flagBuzzer);
-//  
-//  while(flagBuzzer) { 
-//    printf("부저울림\n");
-//    GPIO_SetBits(PORT_PIEZO,PIN_PIEZO);
-//    delay();
-//    GPIO_ResetBits(PORT_PIEZO,PIN_PIEZO);
-//    delay();
-//  } 
-//  //0을 전송하거나 뚜껑 열리면 부저 꺼짐
-//  printf("부저끔\n"); 
-//  
-//  flagBuzzer = 1; // 부저 플래그 다시 복원 
-//}
+
 void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
   printf("부저 플래그: %d\n", flagBuzzer);  
   int endTime = (unsigned)time(NULL); //끝나는 시간
