@@ -20,7 +20,7 @@ void ADC_Configure(void);
 void delay(void);
 void turnRgbLed(int led_idx);
 void sendStringUsart(USART_TypeDef* USARTx, char* msg);
-void buzzerOn(void);
+void piezoOn(void);
 void buzzerOff(void);
 void TIM2_Configure(void) ;
 void TIM2_IRQHandler();
@@ -63,8 +63,8 @@ uint32_t usTime = 0;
 #define PIN_TRIG GPIO_Pin_15
 #define PIN_ECHO GPIO_Pin_13
 
-#define PORT_PIEZO GPIOB
-#define PIN_PIEZO  GPIO_Pin_0
+#define PORT_PIEZO GPIOA
+#define PIN_PIEZO  GPIO_Pin_8
 
 //define 수정
 
@@ -410,12 +410,12 @@ void EXTI15_10_IRQHandler(void) {
     EXTI_ClearITPendingBit(EXTI_Line11);
   }
   if (EXTI_GetITStatus(EXTI_LINE_MAG) != RESET) {  //자석 변화 감지
-    printf("EXTI_LINE_MAG 리셋됨\n"); //붙였다 뗄떼마다 호출됨
+    printf("1. EXTI_LINE_MAG set\n"); //붙였다 뗄떼마다 호출됨
     if (GPIO_ReadInputDataBit(PORT_MAG, PIN_MAG) == Bit_RESET) {     //자석이  리셋되면 (=뚜껑열리면)
+      printf("2. MAG PIN RESET\n");
       sendStringUsart(USART2, msg_menu); //폰에 메뉴판 출력 
       flagBuzzer = 0; //부저끔
     }
-    printf("EXTI_LINE_MAG if문 밖\n");
     EXTI_ClearITPendingBit(EXTI_LINE_MAG);
   }
   printf("====================\n");
@@ -455,14 +455,14 @@ void alert(){
       break;
   }
 }
-//void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
+//void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
 //  printf("부저 플래그: %d\n", flagBuzzer);
 //  
 //  while(flagBuzzer) { 
 //    printf("부저울림\n");
-//    GPIO_SetBits(GPIOB,GPIO_Pin_0);
+//    GPIO_SetBits(PORT_PIEZO,PIN_PIEZO);
 //    delay();
-//    GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+//    GPIO_ResetBits(PORT_PIEZO,PIN_PIEZO);
 //    delay();
 //  } 
 //  //0을 전송하거나 뚜껑 열리면 부저 꺼짐
@@ -470,21 +470,25 @@ void alert(){
 //  
 //  flagBuzzer = 1; // 부저 플래그 다시 복원 
 //}
-void buzzerOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
-  printf("부저 플래그: %d\n", flagBuzzer);
-  
+void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
+  printf("부저 플래그: %d\n", flagBuzzer);  
+  int endTime = (unsigned)time(NULL); //끝나는 시간
+  endTime += 5;  //5초
   while(flagBuzzer) { 
+    int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
+    printf("%d seconds", endTime - startTime);
+    if(endTime - startTime <= 0) { //0초일때 정확히 여기를 실행안하고 있으면 계속 실행돼서<=로 비끔
+      printf("end!\n");
+      break;
+    }
     printf("부저울림\n");
-    GPIO_SetBits(GPIOB,GPIO_Pin_0);
+    GPIO_SetBits(PORT_PIEZO,PIN_PIEZO);
     delay();
-    GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+    GPIO_ResetBits(PORT_PIEZO,PIN_PIEZO);
     delay();
-  } 
-  //0을 전송하거나 뚜껑 열리면 부저 꺼짐
-  printf("부저끔\n"); 
-  
-  flagBuzzer = 1; // 부저 플래그 다시 복원 
+  }
 }
+
 void delayTime(uint32_t delayTime){
   uint32_t prev_time = usTime;
   while(1)
@@ -546,37 +550,6 @@ void getDistance(){
   }
 }
 
-void buzzerTimer(){
-        int endTime = (unsigned)time(NULL); //끝나는 시간
-   endTime += 5;  //5초
-   
-   while(1){
-      int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
-      //printf("%d second \n", endTime - startTime);
-      if(endTime - startTime == 0)
-      {
-         printf("end!\n");
-                        flagTimer = 1;
-         return;
-      }
-   }      
-}
-
-void buzzerTenSeconds(){
-        int endTime = (unsigned)time(NULL); //끝나는 시간
-   endTime += 5;  //5초
-   while(1){
-      int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
-      //printf("%d second \n", endTime - startTime);
-                if(endTime - startTime == 0)
-      {
-         printf("end!\n");
-  
-         return;
-      }
-   }      
-}
-
 int main(void) {
   SystemInit();
   RCC_Configure();
@@ -587,24 +560,28 @@ int main(void) {
   NVIC_Configure();
   Tim_Configure();
   TIM2_Configure();
-  //buzzerTimer();
-  //buzzerTenSeconds();
-    
+
   while (1) {
+//    piezoOn();
+//    if (GPIO_ReadInputDataBit(PORT_MAG, PIN_MAG) == Bit_SET) {
+//      printf("zz\n");
+//      turnRgbLed(RED);
+//    } else {
+//      printf("뗴짐\n");
+//        turnRgbLed(BLUE);
+//    }
     getDistance();
     if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {//약먹을시간되면  (임시로 조이스틱up시)
       //      alert();
+      printf("TIME TO TAKE MEDICINE\n");
       sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
-      buzzerOn();     
+      piezoOn();     
     }
     
-//    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
-//      sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
+    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET)  //제한시간 초과시  (임시로 조이스틱down시)
+      printf("YOU DIDN'T TAKE THE MEDICINE\n");
+        sendStringUsart(USART2, msg_medicine_fail); //약 복용안했다고 메세지 전송
 
-    if(flagTimer == 1){
-        buzzerOn();
-        flagTimer=0;
-    }
   }
   return 0;
 }
