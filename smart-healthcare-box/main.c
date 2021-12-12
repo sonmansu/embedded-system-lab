@@ -54,6 +54,7 @@ void pillCheck();
 int flagPiezo = 1; //c에서는 boolean type이 없음
 int flagTimer = 0;
 uint32_t usTime = 0;
+uint32_t sTime = 1;
 
 //define 수정
 unsigned led_array[3] = {
@@ -180,19 +181,20 @@ void GPIO_Configure(void) {
   GPIO_Init(PORT_ULTRA, &GPIO_InitStructure);
 }
 
-void Tim_Configure(void)
-{
-  TIM_TimeBaseInitTypeDef tim;
-  tim.TIM_Period = 10000;
-  tim.TIM_Prescaler = 7200;
-  tim.TIM_ClockDivision = TIM_CKD_DIV1;
-  tim.TIM_CounterMode = TIM_CounterMode_Up;
-  tim.TIM_RepetitionCounter = 0x0000;
-  //  PIEZO
-  TIM_TimeBaseInit(TIM1, &tim);
-  TIM_Cmd(TIM1, ENABLE);
-  TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
-}
+//void Tim_Configure(void)
+//{
+//  // PIEZO TIMER
+//  TIM_TimeBaseInitTypeDef tim;
+//  tim.TIM_Period = 10000;
+//  tim.TIM_Prescaler = 7200;
+//  tim.TIM_ClockDivision = TIM_CKD_DIV1;
+//  tim.TIM_CounterMode = TIM_CounterMode_Up;
+//  tim.TIM_RepetitionCounter = 0x0000;
+//
+//  TIM_TimeBaseInit(TIM1, &tim);
+//  TIM_Cmd(TIM1, ENABLE);
+//  TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
+//}
 
 void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 {
@@ -227,7 +229,6 @@ void TIM2_IRQHandler() {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
     //printf("%d",usTime);
     usTime++; // 1us마다 Interrupt가 걸리도록 설정해두었으니 usTime을 측정하는 변수
-    
   }
   TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 }
@@ -328,8 +329,7 @@ void NVIC_Configure(void) {
 }
 
 void TIM2_Configure(void) {
-  
-    // 짧은 시간 많은 감지가 필요하므로 1us를 만든다고 가정
+  // 짧은 시간 많은 감지가 필요하므로 1us를 만든다고 가정
   TIM_TimeBaseInitTypeDef TIM_InitStructure;
   TIM_InitStructure.TIM_Prescaler = 72;
   TIM_InitStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -430,6 +430,7 @@ void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 �
     GPIO_ResetBits(PORT_PIEZO,PIN_PIEZO);
     delay();
   }
+  flagPiezo = 1;
 }
 
 void delayTime(uint32_t delayTime){
@@ -440,7 +441,7 @@ void delayTime(uint32_t delayTime){
 }
 void delay(void) {
   int i;
-  for (i = 0; i < 2000000; i++) {}
+  for (i = 0; i < 1000000; i++) {}
 }
 //TIM을 1us로 맞추는 걸로 수정
 int readDistance(uint16_t GPIO_PIN_TRIG, uint16_t GPIO_PIN_ECHO){
@@ -496,16 +497,13 @@ int main(void) {
   EXTI_Configure();
   // ADC_Configure();
   NVIC_Configure();
-  Tim_Configure();
   TIM2_Configure();
 
   while (1) {
     pillCheck();
     //약먹을시간되면  (임시로 조이스틱up시)
     if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_5) == Bit_RESET)  {
-      //      alert();
       piezoOn();     
-
       printf("TIME TO TAKE MEDICINE\n");
       sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
     }
