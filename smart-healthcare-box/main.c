@@ -367,9 +367,12 @@ void USART2_IRQHandler() {
 
   if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET){
     // the most recent received data by the USART1 peripheral
-    printf("USART_GetITStatus()\n");
+//    printf("USART_GetITStatus()\n");
     word = USART_ReceiveData(USART2);
-      printf("word: %c\n", word);
+//      printf("USART_GetITStatus word: %c\n", word);
+        
+          if (word == '\n') printf("n\n");
+            if (word == '\r\n') printf("rn\n");
 
       if (flagHourTime == 1) {
         printf("flagHourTime!!\n");
@@ -386,25 +389,28 @@ void USART2_IRQHandler() {
             printf("int   = %d\n", num);
             hour = atoi(hourString); //char을 int로
             timeIndex = 0;
-            sendStringUsart(USART2, "SET MIN: (24H TIME FORMAT '22')") ;
+//            sendStringUsart(USART2, "SET MIN: (24H TIME FORMAT '22')") ;
             return;
           }
           timeIndex++;
-          return;
+//          return;
       } else if (flagMinTime) {
+            printf("1timeIndex: %d\n", timeIndex);
          printf("flagMinTime\n");
           minString[timeIndex] = word;
           printf("word: %c\n", word);
+            printf("2timeIndex: %d\n", timeIndex);
           if (timeIndex == 1) {
             flagMinTime = 0; //다시 복원
             printf("char* = %s\n", minString);
             int num = atoi(minString); //char을 int로
             min = atoi(minString); //char을 int로
             printf("int   = %d\n", num);
+              timeIndex = 0;
             return;
           }
           timeIndex++;
-          return;
+//          return;
       }
       
         
@@ -418,7 +424,9 @@ void USART2_IRQHandler() {
   //      timePointer = &time[0];
         timeIndex = 0;
         sendStringUsart(USART2, "SET HOUR: (24H TIME FORMAT '22')") ;
-          printf("flagHourTime: %d", flagHourTime);
+        printf("flagHourTime: %d", flagHourTime);
+          
+            hour = 0; min = 0;
       }
       else if (word == 't') {//타이머 지속 시간   입력됨
         turnRgbLed(GREEN);
@@ -470,11 +478,12 @@ void turnRgbLed(int led_idx) {
       GPIO_ResetBits(PORT_RGB, led_array[i]); //끔
   }
 }
-
+int flagEnd = 0;
 void piezoOn() { //위의 alert 보고 자석 인터럽트 방식으로 부저 울리도록 수정. 
   printf("부저 플래그: %d\n", flagPiezo);  
   int endTime = (unsigned)time(NULL); //끝나는 시간
   endTime += 5;  //5초
+  flagEnd = 1;
   while(flagPiezo) { 
     int startTime = (unsigned)time(NULL); //현재시간(while)문을 통해 점점 늘어나는 시간;
     printf("%d seconds", endTime - startTime);
@@ -551,9 +560,12 @@ int timeCheck() {
     time_t rawTime = time(NULL);  // 현재 시간을 받음
     struct tm* t = localtime(&rawTime);    // 현재 시간을 struct tm에 넣음
     
-    int curHour = t -> tm_hour - 3;
+    int curHour = t -> tm_hour +12 - 3;
     int curMin = t -> tm_min;
     int curSec = t -> tm_sec;
+    
+     printf("Cur timeInfo : %d시 %d분 %d초\n", curHour, curMin, curSec); 
+       printf("save timeInfo : %d시 %d분\n", hour, min); 
   
     if (curHour == hour && curMin == min) {
       return 1;
@@ -580,10 +592,12 @@ int timeCheck() {
       sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
     }
     //약먹을 시간되면
-    if (timeCheck() == 1)  {
+    timeCheck();
+    if (timeCheck() == 1 && flagEnd == 0)  {
       piezoOn();     
       printf("TIME TO TAKE MEDICINE\n");
       sendStringUsart(USART2, msg_medicine_time); //폰에 약먹으라고 메세지 전송
+      flagEnd = 1;
     }
     //제한시간 초과시  (임시로 조이스틱down시)
       if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2) == Bit_RESET) {
